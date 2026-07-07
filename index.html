@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nexus · id³</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="signature">id³</div>
+    <div id="toastContainer"></div>
+
+    <!-- Auth Modal -->
+    <div class="modal-overlay" id="authModal">
+        <div class="modal">
+            <h3 style="margin-bottom:10px;">👋 Welcome to Nexus</h3>
+            <p style="color:#64748b;font-size:13px;margin-bottom:14px;">Sign in or create an account</p>
+            <input type="email" id="authEmail" placeholder="Email..." style="margin-bottom:8px;">
+            <input type="password" id="authPassword" placeholder="Password..." style="margin-bottom:8px;">
+            <input type="text" id="authUsername" placeholder="Username (for new accounts)" style="margin-bottom:12px;">
+            <button class="btn-primary" onclick="Nexus.signIn()" style="margin-bottom:6px;">Sign In</button>
+            <button class="btn-secondary" onclick="Nexus.signUp()">Create Account</button>
+            <p id="authError" style="color:#ef4444;font-size:11px;margin-top:8px;display:none;"></p>
+        </div>
+    </div>
+
+    <!-- Landing Page -->
+    <div class="page active" id="page-landing">
+        <div class="container landing-content">
+            <span class="landing-icon">⚡</span>
+            <h1 class="landing-title">Nexus</h1>
+            <p class="landing-subtitle">Shape your presence. Manifest your energy.</p>
+            <button class="btn-primary" id="btnInitiate">✦ Initiate ✦</button>
+        </div>
+    </div>
+
+    <!-- Aura Selection -->
+    <div class="page" id="page-select">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:3px;">Choose Your Auras</h2>
+            <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Select up to 3 energies</p>
+            <div class="counter-chip"><span>✧</span> <strong id="counter">0</strong><span>/3</span></div>
+            <div class="aura-grid" id="auraGrid"></div>
+            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;">Continue →</button>
+            <button class="btn-secondary" onclick="Nexus.navigate('social')">← Back</button>
+        </div>
+    </div>
+
+    <!-- Social Feed (Home) -->
+    <div class="page" id="page-social">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                <h2 style="font-size:19px;font-weight:700;">🌐 Nexus</h2>
+                <span id="homeBadge" style="font-size:10px;background:rgba(0,0,0,0.04);padding:3px 10px;border-radius:18px;">⚡</span>
+            </div>
+            <textarea id="postInput" rows="2" placeholder="Share your progress..."></textarea>
+            <button class="btn-sm btn-primary" id="btnCreatePost" style="margin-top:5px;width:100%;">📝 Post</button>
+            <div id="socialFeed" style="max-height:400px;overflow-y:auto;margin-top:8px;">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="page" id="page-dashboard">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h2 id="homeTitle" style="font-size:17px;font-weight:700;">Dashboard</h2>
+                <button class="btn-sm" style="color:#ef4444;" onclick="Nexus.signOut()">🚪</button>
+            </div>
+            <div class="score-ring-wrap">
+                <div class="score-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="5"/>
+                        <circle id="scoreRing" cx="50" cy="50" r="43" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round" stroke-dasharray="270.18" stroke-dashoffset="270.18"/>
+                    </svg>
+                    <div class="center"><div class="num" id="score">0%</div><div class="label">Strength</div></div>
+                </div>
+            </div>
+            <div class="stat-row">
+                <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="streakCount">0</div><div class="stat-label">Streak</div></div>
+                <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="tasksDone">0</div><div class="stat-label">Tasks</div></div>
+                <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-value" id="diaryCount">0</div><div class="stat-label">Diary</div></div>
+                <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-value" id="msgCount">0</div><div class="stat-label">Chats</div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#475569;margin-bottom:6px;">
+                <span>Today</span><span id="taskProgress" style="color:#94a3b8;">0/0</span>
+            </div>
+            <div id="tasks"></div>
+            <div class="calendar-wrap">
+                <div class="cal-header"><strong>📅 Calendar</strong><span id="monthLabel" style="font-size:11px;color:#94a3b8;">—</span></div>
+                <div class="cal-grid" id="calendar"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn-sm" onclick="Nexus.resetDay()">↺ Reset</button>
+                <button class="btn-sm" onclick="Nexus.navigate('select')">✧ Auras</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Diary -->
+    <div class="page" id="page-diary">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📖 Diary</h2>
+            <textarea id="diaryInput" rows="3" placeholder="Dear diary..."></textarea>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+                <input type="text" id="diaryMood" placeholder="Mood" style="flex:1;">
+                <button class="btn-sm btn-primary" id="btnSaveDiary" style="width:auto;">💾</button>
+            </div>
+            <input type="search" id="diarySearch" placeholder="🔍 Search..." oninput="Nexus.renderDiary()" style="margin-top:8px;">
+            <div id="diaryEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routines -->
+    <div class="page" id="page-routine">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📋 Routines</h2>
+            <input type="text" id="routineTitle" placeholder="Title...">
+            <textarea id="routineInput" rows="2" placeholder="Description..." style="margin-top:6px;"></textarea>
+            <button class="btn-sm btn-primary" id="btnSaveRoutine" style="margin-top:6px;width:100%;">💾 Save</button>
+            <div id="routineEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="page" id="page-chat">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <h2 style="font-size:19px;font-weight:700;">💬 Chat</h2>
+                <span style="font-size:11px;color:#4ade80;">● <span id="onlineCount">0</span></span>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
+                You: <strong id="myUsername">—</strong>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <input type="text" id="chatInput" placeholder="Message..." onkeypress="if(event.key==='Enter')Nexus.sendMessage()" style="flex:1;">
+                <button class="btn-sm btn-primary" id="btnSendMessage" style="width:auto;">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallpapers -->
+    <div class="page" id="page-wallpapers">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Walls</h2>
+            <button class="btn-sm" onclick="Nexus.randomWallpaper()" style="width:100%;margin-bottom:8px;">🎲 Random</button>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">30+ wallpapers</p>
+            <div class="wp-grid" id="wpGrid"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <nav class="bottom-nav" id="bottomNav" style="display:none;">
+        <button class="nav-btn active" data-page="social" onclick="Nexus.navigate('social')"><span class="nav-icon">🌐</span><span class="nav-label">Home</span></button>
+        <button class="nav-btn" data-page="dashboard" onclick="Nexus.navigate('dashboard')"><span class="nav-icon">📊</span><span class="nav-label">Stats</span></button>
+        <button class="nav-btn" data-page="diary" onclick="Nexus.navigate('diary')"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
+        <button class="nav-btn" data-page="routine" onclick="Nexus.navigate('routine')"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
+        <button class="nav-btn" data-page="chat" onclick="Nexus.navigate('chat')"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
+        <button class="nav-btn" data-page="wallpapers" onclick="Nexus.navigate('wallpapers')"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
+    </nav>
+
+    <script src="js/supabase.js"></script>
+    <script src="js/auras.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/diary.js"></script>
+    <script src="js/routine.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/social.js"></script>
+    <script src="js/wallpapers.js"></script>
+</body>
+</html>
