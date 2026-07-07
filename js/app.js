@@ -85,29 +85,55 @@ const Nexus = {
     }
   },
 
-  async signUp() {
+    async signUp() {
     const email = document.getElementById('authEmail').value.trim();
     const password = document.getElementById('authPassword').value;
     const username = document.getElementById('authUsername').value.trim();
 
     if (!email || !password || !username) {
-      Nexus.authError('All fields required');
+      Nexus.authError('All fields are required');
+      return;
+    }
+
+    if (password.length < 6) {
+      Nexus.authError('Password must be at least 6 characters');
       return;
     }
 
     const { data, error } = await supabaseClient.auth.signUp({
-      email,
-      password,
-      options: { data: { username } }
+      email: email,
+      password: password,
+      options: {
+        data: {
+          username: username
+        }
+      }
     });
+
+    console.log("Signup response:", { data, error });
 
     if (error) {
       Nexus.authError(error.message);
-    } else {
-      Nexus.toast('Account created! Check your email to confirm.');
-      document.getElementById('authModal').style.display = 'none';
+      return;
+    }
+
+    if (data.user) {
+      Nexus.toast('Account created successfully');
+
+      document.getElementById('authEmail').value = '';
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authUsername').value = '';
+
+      if (data.session) {
+        Nexus.state.session = data.session;
+        await Nexus.loadProfile();
+        Nexus.showApp();
+      } else {
+        Nexus.toast('Account created. Please check email if confirmation is enabled.');
+      }
     }
   },
+
 
   async signIn() {
     const email = document.getElementById('authEmail').value.trim();
@@ -118,11 +144,19 @@ const Nexus = {
       return;
     }
 
-    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    console.log("Login response:", { data, error });
 
     if (error) {
       Nexus.authError(error.message);
+      return;
     }
+
+    Nexus.toast('Welcome back!');
   },
 
   async signOut() {
