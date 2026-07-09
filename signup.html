@@ -17,7 +17,10 @@
             <p style="color:#64748b;font-size:13px;margin-bottom:24px;">Join the Nexus</p>
 
             <input type="text" id="signupUsername" placeholder="Username" style="margin-bottom:10px;">
-            <input type="password" id="signupPassword" placeholder="Password (min 6 chars)" style="margin-bottom:10px;">
+            <input type="password" id="signupPassword" placeholder="Password" style="margin-bottom:6px;">
+            <div style="font-size:10px;color:#64748b;text-align:left;margin-bottom:10px;padding:0 4px;">
+                Password must contain: uppercase, lowercase, number, and special character
+            </div>
             <input type="password" id="signupConfirm" placeholder="Confirm Password" style="margin-bottom:16px;">
 
             <button class="btn-primary" id="btnSignup">Create Account</button>
@@ -34,20 +37,5 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="js/supabase.js"></script>
     <script src="js/auth.js"></script>
-    
-    <!-- Debug script -->
-    <script>
-        console.log('🔍 Debug - after scripts loaded:');
-        console.log('  typeof supabase:', typeof supabase);
-        console.log('  supabase exists:', typeof supabase !== 'undefined');
-        if (typeof supabase !== 'undefined') {
-            console.log('  supabase.from:', typeof supabase.from);
-            console.log('  supabase.auth:', typeof supabase.auth);
-        }
-        console.log('  window.supabase:', typeof window.supabase);
-        if (typeof window.supabase !== 'undefined') {
-            console.log('  window.supabase.from:', typeof window.supabase.from);
-        }
-    </script>
 </body>
 </html>

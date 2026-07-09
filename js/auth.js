@@ -18,20 +18,17 @@
     if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 4000);
+    setTimeout(() => el.style.display = 'none', 5000);
   }
 
   // Get Supabase client - try multiple sources
   function getSupabase() {
-    // Try global supabase first
     if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
       return supabase;
     }
-    // Try window.supabase
     if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
       return window.supabase;
     }
-    // Try window.supabaseClient (fallback)
     if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && typeof window.supabaseClient.from === 'function') {
       return window.supabaseClient;
     }
@@ -45,29 +42,20 @@
       const sb = getSupabase();
       if (sb && sb.auth && typeof sb.from === 'function') {
         console.log('✅ Supabase already ready');
-        // Make sure it's globally available
-        if (typeof supabase === 'undefined' || !supabase.from) {
-          window.supabase = sb;
-        }
         resolve(sb);
         return;
       }
 
       // If not, wait and retry
       let attempts = 0;
-      const maxAttempts = 150; // 15 seconds max
+      const maxAttempts = 50;
       const checkInterval = setInterval(() => {
         attempts++;
         
         const sb = getSupabase();
-        // Check if supabase exists and has all required methods
         if (sb && sb.auth && typeof sb.from === 'function') {
           console.log('✅ Supabase ready after ' + attempts + ' attempts');
           clearInterval(checkInterval);
-          // Make sure it's globally available
-          if (typeof supabase === 'undefined' || !supabase.from) {
-            window.supabase = sb;
-          }
           resolve(sb);
         } else if (attempts >= maxAttempts) {
           console.error('❌ Supabase failed to load after ' + maxAttempts + ' attempts');
@@ -79,45 +67,17 @@
             const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
             
-            // Check if supabase-js is loaded
             if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
               const newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
               window.supabaseClient = newClient;
               window.supabase = newClient;
-              // Also set global
               if (typeof supabase === 'undefined') {
                 var supabase = newClient;
               }
               console.log('✅ Manually created Supabase client');
               resolve(newClient);
             } else {
-              console.error('❌ Cannot create Supabase client - library not loaded');
-              // Try reloading the script
-              const script = document.createElement('script');
-              script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-              script.onload = function() {
-                console.log('✅ Supabase script reloaded');
-                try {
-                  const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
-                  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
-                  const newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                  window.supabaseClient = newClient;
-                  window.supabase = newClient;
-                  if (typeof supabase === 'undefined') {
-                    var supabase = newClient;
-                  }
-                  console.log('✅ Created Supabase client after reload');
-                  resolve(newClient);
-                } catch (err) {
-                  console.error('Failed to create client after reload:', err);
-                  resolve(null);
-                }
-              };
-              script.onerror = function() {
-                console.error('❌ Failed to reload Supabase script');
-                resolve(null);
-              };
-              document.head.appendChild(script);
+              resolve(null);
             }
           } catch (err) {
             console.error('Failed to manually create client:', err);
@@ -168,14 +128,6 @@
     console.log('✅ Supabase ready for auth');
     console.log('✅ supabase.from available:', typeof sb.from === 'function');
 
-    // Make sure we have a global reference
-    if (typeof supabase === 'undefined' || !supabase.from) {
-      window.supabase = sb;
-      if (typeof supabase === 'undefined') {
-        var supabase = sb;
-      }
-    }
-
     if (page === 'signup.html') {
       const btnSignup = document.getElementById('btnSignup');
       if (btnSignup) {
@@ -197,22 +149,21 @@
             return; 
           }
 
+          // Check password strength
+          const hasUpperCase = /[A-Z]/.test(password);
+          const hasLowerCase = /[a-z]/.test(password);
+          const hasNumber = /[0-9]/.test(password);
+          const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+          if (!hasUpperCase || !hasLowerCase || !hasNumber || !hasSpecial) {
+            showError('signupError', 'Password must contain uppercase, lowercase, number and special character');
+            return;
+          }
+
           try {
             const currentSb = getSupabase();
             if (!currentSb) {
               showError('signupError', 'Database connection error. Please refresh.');
-              return;
-            }
-
-            // Check if username exists in profiles
-            const { data: existing } = await currentSb
-              .from('profiles')
-              .select('id')
-              .eq('username', username)
-              .single();
-
-            if (existing) {
-              showError('signupError', 'Username already taken');
               return;
             }
 
@@ -231,6 +182,8 @@
               console.error('Auth error:', error);
               if (error.message.includes('already registered')) {
                 showError('signupError', 'Username already taken');
+              } else if (error.message.includes('weak password')) {
+                showError('signupError', 'Password too weak. Use uppercase, lowercase, number and special character.');
               } else {
                 showError('signupError', error.message);
               }
