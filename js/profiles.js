@@ -1,0 +1,1 @@
+// Profile functions are in app.js

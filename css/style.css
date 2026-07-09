@@ -55,13 +55,13 @@ body::after {
     box-shadow: 0 20px 60px rgba(0,0,0,0.06);
 }
 
-button {
+button, a button {
     display: inline-flex; align-items: center; justify-content: center;
     padding: 12px 18px; border: none; border-radius: var(--radius-sm);
     font-size: 14px; font-weight: 500; cursor: pointer;
     font-family: var(--font); outline: none;
     -webkit-tap-highlight-color: transparent;
-    transition: all 0.2s; color: inherit;
+    transition: all 0.2s; color: inherit; text-decoration: none;
 }
 button:active { transform: scale(0.96); }
 .btn-primary {
@@ -174,21 +174,81 @@ textarea:focus, input:focus { border-color: #0f172a; }
 }
 .chat-sent { background: #0f172a; color: #fff; margin-left: auto; }
 .chat-received { background: #f1f5f9; color: #1e293b; margin-right: auto; }
-
 .chat-messages { max-height: 340px; overflow-y: auto; padding: 6px 0; margin: 8px 0; }
 
-.post-card {
-    background: rgba(255,255,255,0.6); border-radius: 14px;
-    padding: 12px; margin-bottom: 8px; border: 1px solid rgba(0,0,0,0.04);
+/* Instagram-style Social Feed */
+.ig-story-row {
+    display: flex; gap: 14px; padding: 8px 4px 14px 4px;
+    overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+    border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 12px;
 }
-.post-avatar {
-    width: 32px; height: 32px; border-radius: 50%;
-    background: rgba(0,0,0,0.04); display: flex;
-    align-items: center; justify-content: center; font-size: 16px;
+.ig-story-row::-webkit-scrollbar { display: none; }
+.ig-story { display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; flex-shrink: 0; }
+.ig-story-avatar {
+    width: 56px; height: 56px; border-radius: 50%;
+    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    padding: 2px; display: flex; align-items: center; justify-content: center;
 }
-.post-actions { display: flex; gap: 12px; margin-top: 7px; }
-.post-action { cursor: pointer; color: #94a3b8; font-size: 12px; }
-.post-action.liked { color: #ef4444; }
+.ig-story-avatar .inner {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 22px;
+}
+.ig-story-name { font-size: 9px; color: #64748b; max-width: 56px; overflow: hidden; text-overflow: ellipsis; }
+
+.ig-post {
+    background: rgba(255,255,255,0.7); border-radius: 14px;
+    margin-bottom: 14px; border: 1px solid rgba(0,0,0,0.05); overflow: hidden;
+}
+.ig-post-header { display: flex; align-items: center; padding: 10px 12px; gap: 10px; }
+.ig-post-avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: #e2e8f0;
+    display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.ig-post-user { font-weight: 600; font-size: 13px; }
+.ig-post-time { font-size: 10px; color: #94a3b8; margin-left: auto; }
+.ig-post-image {
+    width: 100%; aspect-ratio: 4/3; background: #e2e8f0;
+    background-size: cover; background-position: center;
+    display: flex; align-items: center; justify-content: center; font-size: 48px; color: #94a3b8;
+}
+.ig-post-actions { display: flex; align-items: center; padding: 8px 12px 4px; gap: 16px; }
+.ig-post-action {
+    cursor: pointer; font-size: 22px; transition: transform 0.2s;
+    background: none; border: none; padding: 4px;
+}
+.ig-post-action:active { transform: scale(1.2); }
+.ig-post-action.liked { color: #ef4444; }
+.ig-post-likes { font-size: 13px; font-weight: 600; padding: 0 12px 4px; }
+.ig-post-caption { padding: 0 12px 8px; font-size: 13px; line-height: 1.4; }
+.ig-post-caption strong { font-weight: 600; }
+.ig-post-comment { padding: 0 12px 10px; font-size: 12px; color: #64748b; cursor: pointer; }
+
+/* Profile */
+.profile-header {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 16px 0; border-bottom: 1px solid rgba(0,0,0,0.06); margin-bottom: 16px;
+}
+.profile-avatar-large {
+    width: 80px; height: 80px; border-radius: 50%;
+    background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    padding: 3px; margin-bottom: 10px;
+}
+.profile-avatar-large .inner {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 36px;
+}
+.profile-name { font-size: 20px; font-weight: 700; }
+.profile-username { font-size: 13px; color: #64748b; }
+.profile-stats { display: flex; gap: 32px; margin: 12px 0 8px; }
+.profile-stat { text-align: center; }
+.profile-stat .num { font-size: 18px; font-weight: 700; }
+.profile-stat .label { font-size: 11px; color: #94a3b8; }
+.profile-bio { font-size: 13px; color: #475569; text-align: center; margin: 6px 0 10px; padding: 0 16px; }
+.profile-edit-btn {
+    padding: 6px 20px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.5); font-size: 12px; cursor: pointer; transition: all 0.2s;
+}
+.profile-edit-btn:hover { background: rgba(0,0,0,0.05); }
 
 .wp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin: 10px 0; }
 .wp-thumb {
@@ -243,10 +303,8 @@ textarea:focus, input:focus { border-color: #0f172a; }
     position: fixed; inset: 0; background: rgba(0,0,0,0.5);
     z-index: 3000; display: flex; align-items: center; justify-content: center;
 }
-.modal {
-    background: #fff; border-radius: 18px; padding: 22px;
-    max-width: 340px; width: 90%; text-align: center;
-}
+.modal { background: #fff; border-radius: 18px; padding: 22px; max-width: 340px; width: 90%; text-align: center; }
+.auth-toggle { font-size: 12px; color: #64748b; margin-top: 12px; cursor: pointer; text-decoration: underline; }
 
 @media (max-width: 480px) {
     .container { padding: 20px 14px; border-radius: 24px; }
@@ -255,4 +313,9 @@ textarea:focus, input:focus { border-color: #0f172a; }
     .score-ring { width: 85px; height: 85px; }
     .score-ring svg { width: 85px; height: 85px; }
     .score-ring .center .num { font-size: 24px; }
+    .ig-story-avatar { width: 48px; height: 48px; }
+    .ig-post-image { aspect-ratio: 1/1; }
+    .profile-avatar-large { width: 64px; height: 64px; }
+    .profile-avatar-large .inner { font-size: 28px; }
+    .profile-stats { gap: 16px; }
 }

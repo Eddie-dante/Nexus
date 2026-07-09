@@ -22,27 +22,12 @@
         </div>
     </div>
 
-    <!-- Social Feed (Home) -->
-    <div class="page" id="page-social">
-        <div class="container">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-                <h2 style="font-size:19px;font-weight:700;">🌐 Nexus</h2>
-                <span id="homeBadge" style="font-size:10px;background:rgba(0,0,0,0.04);padding:3px 10px;border-radius:18px;">⚡</span>
-            </div>
-            <textarea id="postInput" rows="2" placeholder="Share your progress..."></textarea>
-            <button class="btn-sm btn-primary" id="btnCreatePost" style="margin-top:5px;width:100%;">📝 Post</button>
-            <div id="socialFeed" style="max-height:400px;overflow-y:auto;margin-top:8px;">
-                <p style="color:#94a3b8;text-align:center;">Loading...</p>
-            </div>
-        </div>
-    </div>
-
     <!-- Dashboard -->
     <div class="page" id="page-dashboard">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
                 <h2 id="homeTitle" style="font-size:17px;font-weight:700;">Dashboard</h2>
-                <button class="btn-sm" style="color:#ef4444;" id="btnSignout">🚪</button>
+                <span id="homeBadge" style="font-size:10px;background:rgba(0,0,0,0.04);padding:3px 10px;border-radius:18px;">⚡</span>
             </div>
             <div class="score-ring-wrap">
                 <div class="score-ring">
@@ -112,6 +97,7 @@
             </div>
             <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
                 You: <strong id="myUsername">—</strong>
+                <button class="btn-sm" id="btnChangeUsername" style="margin-left:6px;font-size:10px;">✏️</button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <p style="color:#94a3b8;text-align:center;">Loading...</p>
@@ -123,24 +109,77 @@
         </div>
     </div>
 
+    <!-- Social (Instagram-style) -->
+    <div class="page" id="page-social">
+        <div class="container" style="padding: 16px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <h2 style="font-size:20px;font-weight:700;">Nexus</h2>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <button class="btn-sm" id="btnWalls" style="font-size:16px;background:none;border:none;padding:4px;">🎨</button>
+                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;">➕</button>
+                </div>
+            </div>
+            <div class="ig-story-row" id="storyRow"></div>
+            <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:10px 12px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.04);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="ig-post-avatar" style="width:32px;height:32px;font-size:16px;flex-shrink:0;">
+                        <span id="postAvatarEmoji">😊</span>
+                    </div>
+                    <input type="text" id="postInput" placeholder="What's on your mind?" style="flex:1;border:none;background:transparent;padding:6px 0;font-size:13px;outline:none;">
+                    <button class="btn-sm btn-primary" id="btnCreatePost" style="width:auto;padding:6px 14px;font-size:12px;">Post</button>
+                </div>
+            </div>
+            <div id="socialFeed" style="max-height:520px;overflow-y:auto;padding-bottom:10px;">
+                <p style="color:#94a3b8;text-align:center;padding:30px 0;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="page" id="page-profile">
+        <div class="container">
+            <div class="profile-header">
+                <div class="profile-avatar-large"><div class="inner" id="profileAvatarEmoji">😊</div></div>
+                <div class="profile-name" id="profileName">—</div>
+                <div class="profile-username" id="profileUsername">@—</div>
+                <div class="profile-stats">
+                    <div class="profile-stat"><div class="num" id="profilePosts">0</div><div class="label">Posts</div></div>
+                    <div class="profile-stat"><div class="num" id="profileFollowers">0</div><div class="label">Followers</div></div>
+                    <div class="profile-stat"><div class="num" id="profileFollowing">0</div><div class="label">Following</div></div>
+                </div>
+                <div class="profile-bio" id="profileBio">Building my energy. One aura at a time. ⚡</div>
+                <button class="profile-edit-btn" id="btnEditProfile">✏️ Edit Profile</button>
+                <button class="profile-edit-btn" id="btnLogout" style="margin-top:6px;color:#ef4444;border-color:#ef4444;">🚪 Logout</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileDashboard">📊 Dashboard</button>
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileAuras">✧ Auras</button>
+            </div>
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;">📸 Your Posts</h3>
+            <div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+                <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:16px 0;">No posts yet.</p>
+            </div>
+        </div>
+    </div>
+
     <!-- Wallpapers -->
     <div class="page" id="page-wallpapers">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Walls</h2>
             <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random</button>
-            <p style="font-size:10px;color:#94a3b8;" id="wpCount">30+ wallpapers</p>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">50+ wallpapers</p>
             <div class="wp-grid" id="wpGrid"></div>
         </div>
     </div>
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav" id="bottomNav">
-        <button class="nav-btn active" data-page="social"><span class="nav-icon">🌐</span><span class="nav-label">Home</span></button>
-        <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Stats</span></button>
+        <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+        <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
         <button class="nav-btn" data-page="diary"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
         <button class="nav-btn" data-page="routine"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
         <button class="nav-btn" data-page="chat"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
-        <button class="nav-btn" data-page="wallpapers"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
+        <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
     </nav>
 
     <script src="js/supabase.js"></script>
@@ -151,6 +190,7 @@
     <script src="js/routine.js"></script>
     <script src="js/chat.js"></script>
     <script src="js/social.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/wallpapers.js"></script>
 </body>
 </html>

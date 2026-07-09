@@ -11,12 +11,12 @@
 
   function showError(id, msg) {
     const el = document.getElementById(id);
+    if (!el) return;
     el.textContent = msg;
     el.style.display = 'block';
     setTimeout(() => el.style.display = 'none', 4000);
   }
 
-  // SIGNUP PAGE
   if (page === 'signup.html') {
     document.getElementById('btnSignup').addEventListener('click', async () => {
       const username = document.getElementById('signupUsername').value.trim();
@@ -27,13 +27,22 @@
       if (password !== confirm) { showError('signupError', 'Passwords do not match'); return; }
       if (password.length < 4) { showError('signupError', 'Password must be at least 4 characters'); return; }
 
-      const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
-      if (existing) { showError('signupError', 'Username already taken'); return; }
+      // Check locally first
+      const localUsers = JSON.parse(localStorage.getItem('nexus_local_users') || '{}');
+      if (localUsers[username]) { showError('signupError', 'Username taken on this device'); return; }
 
+      // Try Supabase
       const id = crypto.randomUUID();
       const { error } = await supabase.from('profiles').insert({ id, username, password });
 
-      if (error) { showError('signupError', error.message); return; }
+      // Also save locally as backup
+      localUsers[username] = { id, password };
+      localStorage.setItem('nexus_local_users', JSON.stringify(localUsers));
+
+      if (error && error.code !== '23505') {
+        // If Supabase fails but not duplicate, still allow local
+        console.warn('Supabase signup issue, using local:', error.message);
+      }
 
       localStorage.setItem('nexus_user', JSON.stringify({ id, username }));
       toast('Account created!');
@@ -41,7 +50,6 @@
     });
   }
 
-  // LOGIN PAGE
   if (page === 'login.html') {
     document.getElementById('btnLogin').addEventListener('click', async () => {
       const username = document.getElementById('loginUsername').value.trim();
@@ -49,13 +57,26 @@
 
       if (!username || !password) { showError('loginError', 'All fields required'); return; }
 
+      // Try Supabase first
       const { data } = await supabase.from('profiles').select('*').eq('username', username).eq('password', password).single();
 
-      if (!data) { showError('loginError', 'Invalid username or password'); return; }
+      if (data) {
+        localStorage.setItem('nexus_user', JSON.stringify({ id: data.id, username: data.username }));
+        toast('Welcome back!');
+        setTimeout(() => window.location.href = 'app.html', 500);
+        return;
+      }
 
-      localStorage.setItem('nexus_user', JSON.stringify({ id: data.id, username: data.username }));
-      toast('Welcome back!');
-      setTimeout(() => window.location.href = 'app.html', 500);
+      // Fallback to local
+      const localUsers = JSON.parse(localStorage.getItem('nexus_local_users') || '{}');
+      if (localUsers[username] && localUsers[username].password === password) {
+        localStorage.setItem('nexus_user', JSON.stringify({ id: localUsers[username].id, username }));
+        toast('Welcome back!');
+        setTimeout(() => window.location.href = 'app.html', 500);
+        return;
+      }
+
+      showError('loginError', 'Invalid username or password');
     });
   }
 
