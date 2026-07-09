@@ -1,4 +1,4 @@
-// js/auth.js - COMPLETE
+// js/auth.js - COMPLETE FIXED
 (function() {
   const page = window.location.pathname.split('/').pop();
 
@@ -21,19 +21,48 @@
     setTimeout(() => el.style.display = 'none', 4000);
   }
 
-  // Wait for Supabase to be ready
+  // Wait for Supabase to be ready with auth
   function waitForSupabase() {
     return new Promise((resolve) => {
+      // Check if supabase exists and has auth
       if (typeof supabase !== 'undefined' && supabase.auth) {
+        console.log('✅ Supabase already ready');
         resolve();
-      } else {
-        const checkInterval = setInterval(() => {
-          if (typeof supabase !== 'undefined' && supabase.auth) {
-            clearInterval(checkInterval);
-            resolve();
-          }
-        }, 100);
+        return;
       }
+
+      // If supabase exists but auth is loading, wait
+      let attempts = 0;
+      const maxAttempts = 50; // 5 seconds max
+      const checkInterval = setInterval(() => {
+        attempts++;
+        if (typeof supabase !== 'undefined' && supabase.auth) {
+          console.log('✅ Supabase ready after ' + attempts + ' attempts');
+          clearInterval(checkInterval);
+          resolve();
+        } else if (attempts >= maxAttempts) {
+          console.error('❌ Supabase failed to load after ' + maxAttempts + ' attempts');
+          clearInterval(checkInterval);
+          // Try to reload supabase script
+          if (typeof supabase === 'undefined') {
+            console.log('🔄 Reloading Supabase script...');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+            script.onload = function() {
+              console.log('✅ Supabase script reloaded');
+              // Recreate client
+              const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
+              const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
+              if (typeof window.supabase !== 'undefined') {
+                window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                resolve();
+              }
+            };
+            document.head.appendChild(script);
+          }
+          resolve();
+        }
+      }, 100);
     });
   }
 
@@ -65,6 +94,7 @@
   }
 
   // Wait for Supabase before initializing
+  console.log('⏳ Waiting for Supabase...');
   waitForSupabase().then(() => {
     console.log('✅ Supabase ready for auth');
 
@@ -102,9 +132,11 @@
               return;
             }
 
+            console.log('📝 Creating user with email:', username.toLowerCase() + '@nexus.local');
+
             // Create user with Supabase Auth
             const { data, error } = await supabase.auth.signUp({
-              email: `${username.toLowerCase()}@nexus.local`,
+              email: username.toLowerCase() + '@nexus.local',
               password: password,
               options: {
                 data: { username: username }
@@ -112,6 +144,7 @@
             });
 
             if (error) {
+              console.error('Auth error:', error);
               if (error.message.includes('already registered')) {
                 showError('signupError', 'Username already taken');
               } else {
@@ -120,13 +153,20 @@
               return;
             }
 
+            if (!data || !data.user) {
+              showError('signupError', 'Failed to create account');
+              return;
+            }
+
+            console.log('✅ User created:', data.user.id);
+
             // Create profile
             const { error: profileError } = await supabase
               .from('profiles')
               .insert({
                 id: data.user.id,
                 username: username,
-                email: `${username.toLowerCase()}@nexus.local`,
+                email: username.toLowerCase() + '@nexus.local',
                 selected_auras: [],
                 wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
                 bio: 'Building my energy. One aura at a time. ⚡'
@@ -134,7 +174,7 @@
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              showError('signupError', 'Failed to create profile');
+              showError('signupError', 'Failed to create profile: ' + profileError.message);
               return;
             }
 
@@ -147,9 +187,11 @@
             setTimeout(() => window.location.href = 'app.html', 500);
           } catch (error) {
             console.error('Signup error:', error);
-            showError('signupError', 'Something went wrong. Please try again.');
+            showError('signupError', 'Something went wrong: ' + error.message);
           }
         });
+      } else {
+        console.error('❌ btnSignup not found');
       }
     }
 
@@ -166,13 +208,21 @@
           }
 
           try {
+            console.log('🔑 Logging in:', username.toLowerCase() + '@nexus.local');
+
             const { data, error } = await supabase.auth.signInWithPassword({
-              email: `${username.toLowerCase()}@nexus.local`,
+              email: username.toLowerCase() + '@nexus.local',
               password: password
             });
 
             if (error) {
+              console.error('Login error:', error);
               showError('loginError', 'Invalid username or password');
+              return;
+            }
+
+            if (!data || !data.user) {
+              showError('loginError', 'Login failed');
               return;
             }
 
@@ -191,9 +241,11 @@
             setTimeout(() => window.location.href = 'app.html', 500);
           } catch (error) {
             console.error('Login error:', error);
-            showError('loginError', 'Something went wrong. Please try again.');
+            showError('loginError', 'Something went wrong: ' + error.message);
           }
         });
+      } else {
+        console.error('❌ btnLogin not found');
       }
     }
 

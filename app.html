@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Nexus · id³</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -103,13 +102,13 @@
                 <p style="color:#94a3b8;text-align:center;">Loading...</p>
             </div>
             <div style="display:flex;gap:6px;">
-                <input type="text" id="chatInput" placeholder="Message..." onkeypress="if(event.key==='Enter')Nexus.sendMessage()" style="flex:1;">
+                <input type="text" id="chatInput" placeholder="Message..." style="flex:1;">
                 <button class="btn-sm btn-primary" id="btnSendMessage" style="width:auto;">📤</button>
             </div>
         </div>
     </div>
 
-    <!-- Social (Instagram-style) -->
+    <!-- Social -->
     <div class="page" id="page-social">
         <div class="container" style="padding: 16px 14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -182,17 +181,17 @@
         <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
     </nav>
 
-    <!-- In app.html, make sure scripts load in this order -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/supabase.js"></script>
-<script src="js/auras.js"></script>
-<script src="js/app.js"></script>
-<script src="js/home.js"></script>
-<script src="js/diary.js"></script>
-<script src="js/routine.js"></script>
-<script src="js/chat.js"></script>
-<script src="js/social.js"></script>
-<script src="js/profile.js"></script>
-<script src="js/wallpapers.js"></script>
+    <!-- LOAD ORDER: Supabase CDN FIRST, then scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/auras.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/home.js"></script>
+    <script src="js/diary.js"></script>
+    <script src="js/routine.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/social.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/wallpapers.js"></script>
 </body>
 </html>
