@@ -1,4 +1,4 @@
-// js/auth.js - COMPLETE
+// js/auth.js - COMPLETE CLEAN
 (function() {
   const page = window.location.pathname.split('/').pop();
 
@@ -21,11 +21,21 @@
     setTimeout(() => el.style.display = 'none', 5000);
   }
 
-  // Get Supabase client
+  // Get Supabase client from multiple possible locations
   function getSupabase() {
+    // Try supabaseClient first (our clean variable)
+    if (typeof supabaseClient !== 'undefined' && supabaseClient && typeof supabaseClient.from === 'function') {
+      return supabaseClient;
+    }
+    // Try window.supabaseClient
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && typeof window.supabaseClient.from === 'function') {
+      return window.supabaseClient;
+    }
+    // Try supabase
     if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
       return supabase;
     }
+    // Try window.supabase
     if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
       return window.supabase;
     }
@@ -35,7 +45,8 @@
   // Wait for Supabase
   function waitForSupabase() {
     return new Promise(function(resolve) {
-      const sb = getSupabase();
+      // Check immediately
+      var sb = getSupabase();
       if (sb && sb.auth && typeof sb.from === 'function') {
         console.log('✅ Supabase already ready');
         resolve(sb);
@@ -52,9 +63,31 @@
           clearInterval(checkInterval);
           resolve(sb);
         } else if (attempts >= maxAttempts) {
-          console.error('❌ Supabase failed to load');
+          console.error('❌ Supabase failed to load after ' + attempts + ' attempts');
           clearInterval(checkInterval);
-          resolve(null);
+          
+          // Try to manually create
+          try {
+            console.log('🔄 Attempting manual creation...');
+            var SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
+            var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
+            
+            if (window.supabase && window.supabase.createClient) {
+              var newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              window.supabaseClient = newClient;
+              window.supabase = newClient;
+              if (typeof supabase === 'undefined') {
+                var supabase = newClient;
+              }
+              console.log('✅ Manually created Supabase client');
+              resolve(newClient);
+            } else {
+              resolve(null);
+            }
+          } catch (err) {
+            console.error('Manual creation failed:', err);
+            resolve(null);
+          }
         }
       }, 100);
     });
@@ -95,10 +128,16 @@
   waitForSupabase().then(function(sb) {
     if (!sb) {
       console.error('❌ Failed to get Supabase client. Please refresh.');
+      var errorEl = document.getElementById('signupError');
+      if (errorEl) {
+        errorEl.textContent = 'Database connection error. Please refresh the page.';
+        errorEl.style.display = 'block';
+      }
       return;
     }
     
     console.log('✅ Supabase ready for auth');
+    console.log('✅ supabase.from available:', typeof sb.from === 'function');
 
     if (page === 'signup.html') {
       var btnSignup = document.getElementById('btnSignup');
