@@ -86,7 +86,6 @@ button:active { transform: scale(0.96); }
 .landing-title {
     font-size: 44px; font-weight: 800; letter-spacing: -2px;
     background: linear-gradient(135deg, #0f172a 60%, #475569);
-    background-clip: text;
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
     margin-bottom: 6px;
 }
@@ -162,7 +161,7 @@ button:active { transform: scale(0.96); }
     border-radius: 13px; padding: 12px; margin-bottom: 7px;
 }
 
-textarea, input[type="text"], input[type="search"], input[type="email"], input[type="password"] {
+textarea, input[type="text"], input[type="search"], input[type="password"] {
     width: 100%; padding: 10px 13px; border: 1px solid rgba(0,0,0,0.08);
     border-radius: 13px; font-family: var(--font); font-size: 13px;
     outline: none; background: rgba(255,255,255,0.5); resize: vertical;
@@ -198,83 +197,36 @@ textarea:focus, input:focus { border-color: #0f172a; }
 }
 .wp-thumb.selected { border-color: #0f172a; }
 
-/* BOTTOM NAV */
 .bottom-nav {
-    position: fixed;
-    bottom: 0; left: 0; right: 0;
+    position: fixed; bottom: 0; left: 0; right: 0;
     background: rgba(255,255,255,0.93);
     backdrop-filter: blur(25px);
     -webkit-backdrop-filter: blur(25px);
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    padding: 5px 2px;
-    padding-bottom: calc(5px + var(--safe-bottom));
-    z-index: 1000;
-    border-top: 1px solid rgba(0,0,0,0.07);
-    gap: 0;
+    display: flex; justify-content: space-evenly; align-items: center;
+    padding: 5px 2px; padding-bottom: calc(5px + var(--safe-bottom));
+    z-index: 1000; border-top: 1px solid rgba(0,0,0,0.07); gap: 0;
 }
 @media (min-width: 600px) {
-    .bottom-nav {
-        max-width: 500px;
-        left: 50%;
-        transform: translateX(-50%);
-        border-radius: 18px 18px 0 0;
-        padding: 6px 8px;
-    }
+    .bottom-nav { max-width: 500px; left: 50%; transform: translateX(-50%); border-radius: 18px 18px 0 0; padding: 6px 8px; }
 }
-
 .nav-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1px;
-    cursor: pointer;
-    color: #64748b;
-    font-size: 9px;
-    font-weight: 500;
-    padding: 5px 4px;
-    border-radius: 10px;
-    background: none;
-    border: none;
-    font-family: var(--font);
-    white-space: nowrap;
-    transition: all 0.2s;
-    flex: 1;
-    min-width: 0;
-    max-width: 70px;
-    text-decoration: none;
-    -webkit-tap-highlight-color: transparent;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 1px; cursor: pointer; color: #64748b; font-size: 9px; font-weight: 500;
+    padding: 5px 4px; border-radius: 10px; background: none; border: none;
+    font-family: var(--font); white-space: nowrap; transition: all 0.2s;
+    flex: 1; min-width: 0; max-width: 70px; -webkit-tap-highlight-color: transparent;
 }
 .nav-btn:hover { color: #0f172a; background: rgba(0,0,0,0.03); }
 .nav-btn.active { color: #0f172a; background: rgba(0,0,0,0.05); font-weight: 600; }
 .nav-btn .nav-icon { font-size: 18px; line-height: 1; }
 .nav-btn .nav-label { line-height: 1; font-size: 8px; }
-
-@media (min-width: 420px) {
-    .nav-btn { padding: 6px 6px; }
-    .nav-btn .nav-icon { font-size: 19px; }
-    .nav-btn .nav-label { font-size: 9px; }
-}
-
-@media (max-width: 360px) {
-    .nav-btn { padding: 4px 2px; }
-    .nav-btn .nav-icon { font-size: 16px; }
-    .nav-btn .nav-label { font-size: 7px; }
-}
+@media (min-width: 420px) { .nav-btn .nav-icon { font-size: 19px; } .nav-btn .nav-label { font-size: 9px; } }
+@media (max-width: 360px) { .nav-btn .nav-icon { font-size: 16px; } .nav-btn .nav-label { font-size: 7px; } }
 
 .signature {
     position: fixed; bottom: 75px; right: 16px;
     font-size: 10px; font-weight: 600; letter-spacing: 1.5px;
     color: #0f172a; opacity: 0.2; z-index: 100; pointer-events: none;
-}
-.wp-fab {
-    position: fixed; bottom: 75px; left: 16px; z-index: 999;
-    background: rgba(15,23,42,0.9); width: 34px; height: 34px;
-    border-radius: 50%; font-size: 14px; cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    border: none; color: #fff; box-shadow: 0 4px 14px rgba(0,0,0,0.2);
 }
 
 .toast {

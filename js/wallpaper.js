@@ -34,10 +34,7 @@ const UNSPLASH = [
 Nexus.setWallpaper = async function(url) {
   Nexus.state.wallpaper = url;
   Nexus.setBg(url);
-  await supabaseClient
-    .from('profiles')
-    .update({ wallpaper: url })
-    .eq('id', Nexus.state.session.user.id);
+  await supabase.from('profiles').update({ wallpaper: url }).eq('id', Nexus.state.user.id);
   Nexus.renderWallpapers();
   Nexus.toast('Applied');
 };

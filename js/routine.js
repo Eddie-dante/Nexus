@@ -2,13 +2,7 @@ Nexus.saveRoutine = async function() {
   const title = document.getElementById('routineTitle').value.trim();
   const content = document.getElementById('routineInput').value.trim();
   if (!title || !content) { Nexus.toast('Add title & description'); return; }
-
-  const { error } = await supabaseClient
-    .from('routines')
-    .insert({ user_id: Nexus.state.session.user.id, title, content });
-
-  if (error) { Nexus.toast('Error saving'); return; }
-
+  await supabase.from('routines').insert({ user_id: Nexus.state.user.id, title, content });
   document.getElementById('routineTitle').value = '';
   document.getElementById('routineInput').value = '';
   Nexus.renderRoutines();
@@ -16,26 +10,19 @@ Nexus.saveRoutine = async function() {
 };
 
 Nexus.deleteRoutine = async function(id) {
-  await supabaseClient.from('routines').delete().eq('id', id);
+  await supabase.from('routines').delete().eq('id', id);
   Nexus.renderRoutines();
 };
 
 Nexus.renderRoutines = async function() {
   const container = document.getElementById('routineEntries');
   if (!container) return;
-
-  const { data: routines } = await supabaseClient
-    .from('routines')
-    .select('*')
-    .eq('user_id', Nexus.state.session.user.id)
-    .order('created_at', { ascending: false });
-
-  if (!routines || routines.length === 0) {
+  const { data } = await supabase.from('routines').select('*').eq('user_id', Nexus.state.user.id).order('created_at', { ascending: false });
+  if (!data || !data.length) {
     container.innerHTML = '<p style="color:#94a3b8;text-align:center;">No routines yet.</p>';
     return;
   }
-
-  container.innerHTML = routines.map(r => `
+  container.innerHTML = data.map(r => `
     <div class="entry-card">
       <strong>${r.title}</strong>
       <small style="color:#94a3b8;display:block;">${new Date(r.created_at).toLocaleDateString()}</small>
