@@ -1,4 +1,4 @@
-// js/auth.js - COMPLETE CLEAN
+// js/auth.js - COMPLETE
 (function() {
   const page = window.location.pathname.split('/').pop();
 
@@ -21,27 +21,21 @@
     setTimeout(() => el.style.display = 'none', 5000);
   }
 
-  // Get Supabase client from multiple sources
   function getSupabase() {
-    // Try supabaseClient first
     if (typeof supabaseClient !== 'undefined' && supabaseClient && supabaseClient.auth) {
       return supabaseClient;
     }
-    // Try window.supabase
     if (typeof window.supabase !== 'undefined' && window.supabase && window.supabase.auth) {
       return window.supabase;
     }
-    // Try supabase
     if (typeof supabase !== 'undefined' && supabase && supabase.auth) {
       return supabase;
     }
     return null;
   }
 
-  // Wait for Supabase
   function waitForSupabase() {
     return new Promise(function(resolve) {
-      // Check immediately
       var sb = getSupabase();
       if (sb && sb.auth) {
         console.log('✅ Supabase already ready');
@@ -59,31 +53,9 @@
           clearInterval(checkInterval);
           resolve(sb);
         } else if (attempts >= maxAttempts) {
-          console.error('❌ Supabase failed to load after ' + attempts + ' attempts');
           clearInterval(checkInterval);
-          
-          // Try to manually create
-          try {
-            console.log('🔄 Attempting manual creation...');
-            var url = 'https://iiiwpjpewleftgxhspik.supabase.co';
-            var key = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
-            
-            if (window.supabase && window.supabase.createClient) {
-              var newClient = window.supabase.createClient(url, key);
-              window.supabaseClient = newClient;
-              window.supabase = newClient;
-              if (typeof supabase === 'undefined') {
-                var supabase = newClient;
-              }
-              console.log('✅ Manually created Supabase client');
-              resolve(newClient);
-            } else {
-              resolve(null);
-            }
-          } catch (err) {
-            console.error('Manual creation failed:', err);
-            resolve(null);
-          }
+          console.error('❌ Supabase failed to load');
+          resolve(null);
         }
       }, 100);
     });
@@ -104,15 +76,12 @@
             .select('*')
             .eq('id', session.user.id)
             .single();
-          
           var profile = profileResult.data;
-          
           localStorage.setItem('nexus_user', JSON.stringify({
             id: session.user.id,
             username: profile?.username || session.user.email?.split('@')[0] || 'user'
           }));
         } catch (e) {
-          // Profile might not exist yet
           localStorage.setItem('nexus_user', JSON.stringify({
             id: session.user.id,
             username: session.user.email?.split('@')[0] || 'user'
@@ -131,18 +100,12 @@
   
   waitForSupabase().then(function(sb) {
     if (!sb) {
-      console.error('❌ Failed to get Supabase client. Please refresh.');
-      var errorEl = document.getElementById('signupError');
-      if (errorEl) {
-        errorEl.textContent = 'Database connection error. Please refresh the page.';
-        errorEl.style.display = 'block';
-      }
+      console.error('❌ Failed to get Supabase client');
       return;
     }
     
     console.log('✅ Supabase ready for auth');
 
-    // SIGNUP
     if (page === 'signup.html') {
       var btnSignup = document.getElementById('btnSignup');
       if (btnSignup) {
@@ -153,7 +116,6 @@
           var password = document.getElementById('signupPassword').value;
           var confirm = document.getElementById('signupConfirm').value;
 
-          // Validation
           if (!username || !password) { 
             showError('signupError', 'All fields required'); 
             return; 
@@ -167,7 +129,6 @@
             return; 
           }
 
-          // Password strength check
           var hasUpperCase = /[A-Z]/.test(password);
           var hasLowerCase = /[a-z]/.test(password);
           var hasNumber = /[0-9]/.test(password);
@@ -181,13 +142,12 @@
           try {
             var currentSb = getSupabase();
             if (!currentSb) {
-              showError('signupError', 'Database connection error. Please refresh.');
+              showError('signupError', 'Database connection error');
               return;
             }
 
             console.log('📝 Creating user:', username);
 
-            // Sign up with Supabase Auth
             var authResult = await currentSb.auth.signUp({
               email: username.toLowerCase() + '@nexus.local',
               password: password,
@@ -215,9 +175,9 @@
 
             console.log('✅ User created:', authResult.data.user.id);
 
-            // Create profile in profiles table
+            // Create profile
             try {
-              var profileResult = await currentSb
+              await currentSb
                 .from('profiles')
                 .insert({
                   id: authResult.data.user.id,
@@ -227,16 +187,10 @@
                   wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
                   bio: 'Building my energy. One aura at a time. ⚡'
                 });
-
-              if (profileResult.error) {
-                console.error('Profile error:', profileResult.error);
-                // Don't fail the signup if profile creation fails
-              }
             } catch (profileErr) {
               console.error('Profile creation error:', profileErr);
             }
 
-            // Save user to localStorage
             localStorage.setItem('nexus_user', JSON.stringify({ 
               id: authResult.data.user.id, 
               username: username 
@@ -255,7 +209,6 @@
       }
     }
 
-    // LOGIN
     if (page === 'login.html') {
       var btnLogin = document.getElementById('btnLogin');
       if (btnLogin) {
@@ -273,7 +226,7 @@
           try {
             var currentSb = getSupabase();
             if (!currentSb) {
-              showError('loginError', 'Database connection error. Please refresh.');
+              showError('loginError', 'Database connection error');
               return;
             }
 
@@ -295,14 +248,12 @@
               return;
             }
 
-            // Get profile
             try {
               var profileResult = await currentSb
                 .from('profiles')
                 .select('*')
                 .eq('id', authResult.data.user.id)
                 .single();
-
               var profile = profileResult.data;
               localStorage.setItem('nexus_user', JSON.stringify({ 
                 id: authResult.data.user.id, 
@@ -328,7 +279,6 @@
       }
     }
 
-    // Check existing session
     if ((page === 'login.html' || page === 'signup.html') && localStorage.getItem('nexus_user')) {
       checkSession().then(function(hasSession) {
         if (hasSession) {
