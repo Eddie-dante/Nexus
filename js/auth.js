@@ -1,4 +1,4 @@
-// js/auth.js - COMPLETE
+// js/auth.js - COMPLETE FIXED
 (function() {
   const page = window.location.pathname.split('/').pop();
 
@@ -21,23 +21,20 @@
     setTimeout(() => el.style.display = 'none', 5000);
   }
 
-  // Get Supabase client
+  // Get Supabase client - try all possible sources
   function getSupabase() {
-    // Try supabaseClient first (our variable)
-    if (typeof supabaseClient !== 'undefined' && supabaseClient && typeof supabaseClient.from === 'function') {
-      return supabaseClient;
-    }
-    // Try global supabase
-    if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
-      return supabase;
-    }
-    // Try window.supabase
-    if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
-      return window.supabase;
-    }
-    // Try window.supabaseClient
-    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && typeof window.supabaseClient.from === 'function') {
-      return window.supabaseClient;
+    // Try all possible sources
+    const sources = [
+      window._supabase,
+      window.supabase,
+      window.supabaseClient,
+      supabase
+    ];
+    
+    for (const source of sources) {
+      if (source && typeof source.from === 'function' && typeof source.auth !== 'undefined') {
+        return source;
+      }
     }
     return null;
   }
@@ -45,6 +42,7 @@
   // Wait for Supabase
   function waitForSupabase() {
     return new Promise((resolve) => {
+      // Check immediately
       const sb = getSupabase();
       if (sb && sb.auth && typeof sb.from === 'function') {
         console.log('✅ Supabase already ready');
@@ -53,7 +51,7 @@
       }
 
       let attempts = 0;
-      const maxAttempts = 50;
+      const maxAttempts = 100;
       const checkInterval = setInterval(() => {
         attempts++;
         const sb = getSupabase();
@@ -62,9 +60,34 @@
           clearInterval(checkInterval);
           resolve(sb);
         } else if (attempts >= maxAttempts) {
-          console.error('❌ Supabase failed to load');
+          console.error('❌ Supabase failed to load after ' + maxAttempts + ' attempts');
           clearInterval(checkInterval);
-          resolve(null);
+          
+          // Try to manually recreate
+          try {
+            console.log('🔄 Attempting manual recreation...');
+            const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
+            
+            // Check if the library is loaded
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+              const newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              window._supabase = newClient;
+              window.supabase = newClient;
+              window.supabaseClient = newClient;
+              if (typeof supabase === 'undefined') {
+                var supabase = newClient;
+              }
+              console.log('✅ Manually created Supabase client');
+              resolve(newClient);
+            } else {
+              console.error('❌ Supabase library not loaded');
+              resolve(null);
+            }
+          } catch (err) {
+            console.error('Manual creation failed:', err);
+            resolve(null);
+          }
         }
       }, 100);
     });
@@ -100,11 +123,14 @@
   
   waitForSupabase().then((sb) => {
     if (!sb) {
-      console.error('❌ Failed to get Supabase client');
+      console.error('❌ Failed to get Supabase client. Please refresh.');
+      document.getElementById('signupError')?.textContent = 'Database connection error. Please refresh.';
       return;
     }
     
     console.log('✅ Supabase ready for auth');
+    console.log('✅ supabase.from available:', typeof sb.from === 'function');
+    console.log('✅ supabase.auth available:', typeof sb.auth !== 'undefined');
 
     if (page === 'signup.html') {
       const btnSignup = document.getElementById('btnSignup');
@@ -141,22 +167,27 @@
           try {
             const currentSb = getSupabase();
             if (!currentSb) {
-              showError('signupError', 'Database connection error');
+              showError('signupError', 'Database connection error. Please refresh.');
               return;
             }
 
             console.log('📝 Creating user:', username);
+            console.log('📧 Email:', username.toLowerCase() + '@nexus.local');
 
-            // First, check if username exists
-            const { data: existing } = await currentSb
-              .from('profiles')
-              .select('username')
-              .eq('username', username)
-              .maybeSingle();
+            // Check if username exists first
+            try {
+              const { data: existing } = await currentSb
+                .from('profiles')
+                .select('username')
+                .eq('username', username)
+                .maybeSingle();
 
-            if (existing) {
-              showError('signupError', 'Username already taken');
-              return;
+              if (existing) {
+                showError('signupError', 'Username already taken');
+                return;
+              }
+            } catch (checkError) {
+              console.log('⚠️ Could not check username (might not exist yet), continuing...');
             }
 
             // Create user with Supabase Auth
@@ -175,7 +206,7 @@
               } else if (error.message.includes('weak password')) {
                 showError('signupError', 'Password too weak. Use uppercase, lowercase, number and special character.');
               } else {
-                showError('signupError', error.message);
+                showError('signupError', 'Auth error: ' + error.message);
               }
               return;
             }
@@ -201,12 +232,6 @@
 
             if (profileError) {
               console.error('Profile creation error:', profileError);
-              // Try to delete the auth user if profile creation fails
-              try {
-                await currentSb.auth.admin.deleteUser(data.user.id);
-              } catch (e) {
-                console.error('Failed to cleanup auth user:', e);
-              }
               showError('signupError', 'Failed to create profile: ' + profileError.message);
               return;
             }
@@ -223,6 +248,8 @@
             showError('signupError', 'Something went wrong: ' + error.message);
           }
         });
+      } else {
+        console.error('❌ btnSignup not found');
       }
     }
 
@@ -241,7 +268,7 @@
           try {
             const currentSb = getSupabase();
             if (!currentSb) {
-              showError('loginError', 'Database connection error');
+              showError('loginError', 'Database connection error. Please refresh.');
               return;
             }
 
@@ -281,6 +308,8 @@
             showError('loginError', 'Something went wrong: ' + error.message);
           }
         });
+      } else {
+        console.error('❌ btnLogin not found');
       }
     }
 

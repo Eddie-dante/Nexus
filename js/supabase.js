@@ -1,22 +1,31 @@
-// js/supabase.js - COMPLETE
+// js/supabase.js - COMPLETE FIXED
 const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
 
-// Check if supabase is already defined
-if (typeof window.supabaseClient === 'undefined') {
-    window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Clear any existing to avoid conflicts
+if (typeof window._supabase !== 'undefined') {
+    delete window._supabase;
+}
+if (typeof window.supabase !== 'undefined') {
+    delete window.supabase;
+}
+if (typeof window.supabaseClient !== 'undefined') {
+    delete window.supabaseClient;
 }
 
-// Use a different variable name to avoid conflicts
-const supabaseClient = window.supabaseClient;
+// Create the client
+const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// Also make it available globally but check first
+// Store in multiple places for compatibility
+window._supabase = _supabase;
+window.supabase = _supabase;
+window.supabaseClient = _supabase;
+
+// Also create a global variable
 if (typeof supabase === 'undefined') {
-    var supabase = supabaseClient;
-} else {
-    // If it exists, just use it
-    console.log('✅ Supabase already exists');
+    var supabase = _supabase;
 }
 
-console.log('✅ Supabase client ready');
+console.log('✅ Supabase client created and ready');
 console.log('✅ supabase.from available:', typeof supabase.from === 'function');
+console.log('✅ supabase.auth available:', typeof supabase.auth !== 'undefined');
