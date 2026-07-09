@@ -1,26 +1,26 @@
-// js/app.js - COMPLETE
-// Wait for Supabase to be ready
-function waitForSupabase() {
-  return new Promise((resolve) => {
-    if (typeof supabase !== 'undefined' && supabase.auth) {
-      resolve();
-    } else {
-      const checkInterval = setInterval(() => {
-        if (typeof supabase !== 'undefined' && supabase.auth) {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
-    }
-  });
-}
-
+// js/app.js - COMPLETE FIXED
 // Helper to prevent XSS
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+// Wait for Supabase to be ready
+function waitForSupabase() {
+  return new Promise((resolve) => {
+    if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
+      resolve();
+    } else {
+      const checkInterval = setInterval(() => {
+        if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
+          clearInterval(checkInterval);
+          resolve();
+        }
+      }, 100);
+    }
+  });
 }
 
 const Nexus = {

@@ -24,43 +24,54 @@
   // Wait for Supabase to be ready with auth
   function waitForSupabase() {
     return new Promise((resolve) => {
-      // Check if supabase exists and has auth
-      if (typeof supabase !== 'undefined' && supabase.auth) {
+      // First check if supabase exists and has auth
+      if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
         console.log('✅ Supabase already ready');
         resolve();
         return;
       }
 
-      // If supabase exists but auth is loading, wait
+      // If not, wait and retry
       let attempts = 0;
-      const maxAttempts = 50; // 5 seconds max
+      const maxAttempts = 100; // 10 seconds max
       const checkInterval = setInterval(() => {
         attempts++;
-        if (typeof supabase !== 'undefined' && supabase.auth) {
+        
+        // Check if supabase exists and has all required methods
+        if (typeof supabase !== 'undefined' && 
+            supabase.auth && 
+            typeof supabase.from === 'function') {
           console.log('✅ Supabase ready after ' + attempts + ' attempts');
           clearInterval(checkInterval);
           resolve();
         } else if (attempts >= maxAttempts) {
           console.error('❌ Supabase failed to load after ' + maxAttempts + ' attempts');
           clearInterval(checkInterval);
-          // Try to reload supabase script
-          if (typeof supabase === 'undefined') {
-            console.log('🔄 Reloading Supabase script...');
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-            script.onload = function() {
-              console.log('✅ Supabase script reloaded');
-              // Recreate client
-              const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
-              const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
-              if (typeof window.supabase !== 'undefined') {
-                window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                resolve();
+          
+          // Try to reload Supabase script
+          console.log('🔄 Attempting to reload Supabase...');
+          const script = document.createElement('script');
+          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+          script.onload = function() {
+            console.log('✅ Supabase script reloaded');
+            const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
+            const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
+            if (typeof window.supabase !== 'undefined') {
+              // Use a different variable name to avoid conflict
+              window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              // Make it available globally
+              if (typeof supabase === 'undefined') {
+                window.supabase = window.supabaseClient;
               }
-            };
-            document.head.appendChild(script);
-          }
-          resolve();
+              resolve();
+            }
+          };
+          script.onerror = function() {
+            console.error('❌ Failed to reload Supabase script');
+            // Still resolve to prevent hanging
+            resolve();
+          };
+          document.head.appendChild(script);
         }
       }, 100);
     });
@@ -68,7 +79,7 @@
 
   async function checkSession() {
     try {
-      if (typeof supabase === 'undefined' || !supabase.auth) {
+      if (typeof supabase === 'undefined' || !supabase.auth || typeof supabase.from !== 'function') {
         console.warn('Supabase not ready yet');
         return false;
       }
@@ -95,8 +106,10 @@
 
   // Wait for Supabase before initializing
   console.log('⏳ Waiting for Supabase...');
+  
   waitForSupabase().then(() => {
     console.log('✅ Supabase ready for auth');
+    console.log('✅ supabase.from available:', typeof supabase.from === 'function');
 
     if (page === 'signup.html') {
       const btnSignup = document.getElementById('btnSignup');
