@@ -21,57 +21,108 @@
     setTimeout(() => el.style.display = 'none', 4000);
   }
 
+  // Get Supabase client - try multiple sources
+  function getSupabase() {
+    // Try global supabase first
+    if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
+      return supabase;
+    }
+    // Try window.supabase
+    if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
+      return window.supabase;
+    }
+    // Try window.supabaseClient (fallback)
+    if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && typeof window.supabaseClient.from === 'function') {
+      return window.supabaseClient;
+    }
+    return null;
+  }
+
   // Wait for Supabase to be ready with auth
   function waitForSupabase() {
     return new Promise((resolve) => {
       // First check if supabase exists and has auth
-      if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
+      const sb = getSupabase();
+      if (sb && sb.auth && typeof sb.from === 'function') {
         console.log('✅ Supabase already ready');
-        resolve();
+        // Make sure it's globally available
+        if (typeof supabase === 'undefined' || !supabase.from) {
+          window.supabase = sb;
+        }
+        resolve(sb);
         return;
       }
 
       // If not, wait and retry
       let attempts = 0;
-      const maxAttempts = 100; // 10 seconds max
+      const maxAttempts = 150; // 15 seconds max
       const checkInterval = setInterval(() => {
         attempts++;
         
+        const sb = getSupabase();
         // Check if supabase exists and has all required methods
-        if (typeof supabase !== 'undefined' && 
-            supabase.auth && 
-            typeof supabase.from === 'function') {
+        if (sb && sb.auth && typeof sb.from === 'function') {
           console.log('✅ Supabase ready after ' + attempts + ' attempts');
           clearInterval(checkInterval);
-          resolve();
+          // Make sure it's globally available
+          if (typeof supabase === 'undefined' || !supabase.from) {
+            window.supabase = sb;
+          }
+          resolve(sb);
         } else if (attempts >= maxAttempts) {
           console.error('❌ Supabase failed to load after ' + maxAttempts + ' attempts');
           clearInterval(checkInterval);
           
-          // Try to reload Supabase script
-          console.log('🔄 Attempting to reload Supabase...');
-          const script = document.createElement('script');
-          script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
-          script.onload = function() {
-            console.log('✅ Supabase script reloaded');
+          // Try to manually create the client
+          console.log('🔄 Attempting to manually create Supabase client...');
+          try {
             const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
             const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
-            if (typeof window.supabase !== 'undefined') {
-              // Use a different variable name to avoid conflict
-              window.supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-              // Make it available globally
+            
+            // Check if supabase-js is loaded
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+              const newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+              window.supabaseClient = newClient;
+              window.supabase = newClient;
+              // Also set global
               if (typeof supabase === 'undefined') {
-                window.supabase = window.supabaseClient;
+                var supabase = newClient;
               }
-              resolve();
+              console.log('✅ Manually created Supabase client');
+              resolve(newClient);
+            } else {
+              console.error('❌ Cannot create Supabase client - library not loaded');
+              // Try reloading the script
+              const script = document.createElement('script');
+              script.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+              script.onload = function() {
+                console.log('✅ Supabase script reloaded');
+                try {
+                  const SUPABASE_URL = 'https://iiiwpjpewleftgxhspik.supabase.co';
+                  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlpaXdwanBld2xlZnRneGhzcGlrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMzNDQ1NTgsImV4cCI6MjA5ODkyMDU1OH0.yFQM2kt62O7I-zMl5fJwym3OHQc4U-TbMof9oIv5G3s';
+                  const newClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                  window.supabaseClient = newClient;
+                  window.supabase = newClient;
+                  if (typeof supabase === 'undefined') {
+                    var supabase = newClient;
+                  }
+                  console.log('✅ Created Supabase client after reload');
+                  resolve(newClient);
+                } catch (err) {
+                  console.error('Failed to create client after reload:', err);
+                  resolve(null);
+                }
+              };
+              script.onerror = function() {
+                console.error('❌ Failed to reload Supabase script');
+                resolve(null);
+              };
+              document.head.appendChild(script);
             }
-          };
-          script.onerror = function() {
-            console.error('❌ Failed to reload Supabase script');
-            // Still resolve to prevent hanging
-            resolve();
-          };
-          document.head.appendChild(script);
+          } catch (err) {
+            console.error('Failed to manually create client:', err);
+            resolve(null);
+          }
         }
       }, 100);
     });
@@ -79,13 +130,14 @@
 
   async function checkSession() {
     try {
-      if (typeof supabase === 'undefined' || !supabase.auth || typeof supabase.from !== 'function') {
+      const sb = getSupabase();
+      if (!sb || !sb.auth || typeof sb.from !== 'function') {
         console.warn('Supabase not ready yet');
         return false;
       }
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await sb.auth.getSession();
       if (session) {
-        const { data: profile } = await supabase
+        const { data: profile } = await sb
           .from('profiles')
           .select('*')
           .eq('id', session.user.id)
@@ -107,9 +159,22 @@
   // Wait for Supabase before initializing
   console.log('⏳ Waiting for Supabase...');
   
-  waitForSupabase().then(() => {
+  waitForSupabase().then((sb) => {
+    if (!sb) {
+      console.error('❌ Failed to get Supabase client. Please refresh the page.');
+      return;
+    }
+    
     console.log('✅ Supabase ready for auth');
-    console.log('✅ supabase.from available:', typeof supabase.from === 'function');
+    console.log('✅ supabase.from available:', typeof sb.from === 'function');
+
+    // Make sure we have a global reference
+    if (typeof supabase === 'undefined' || !supabase.from) {
+      window.supabase = sb;
+      if (typeof supabase === 'undefined') {
+        var supabase = sb;
+      }
+    }
 
     if (page === 'signup.html') {
       const btnSignup = document.getElementById('btnSignup');
@@ -133,8 +198,14 @@
           }
 
           try {
+            const currentSb = getSupabase();
+            if (!currentSb) {
+              showError('signupError', 'Database connection error. Please refresh.');
+              return;
+            }
+
             // Check if username exists in profiles
-            const { data: existing } = await supabase
+            const { data: existing } = await currentSb
               .from('profiles')
               .select('id')
               .eq('username', username)
@@ -148,7 +219,7 @@
             console.log('📝 Creating user with email:', username.toLowerCase() + '@nexus.local');
 
             // Create user with Supabase Auth
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await currentSb.auth.signUp({
               email: username.toLowerCase() + '@nexus.local',
               password: password,
               options: {
@@ -174,7 +245,7 @@
             console.log('✅ User created:', data.user.id);
 
             // Create profile
-            const { error: profileError } = await supabase
+            const { error: profileError } = await currentSb
               .from('profiles')
               .insert({
                 id: data.user.id,
@@ -221,9 +292,15 @@
           }
 
           try {
+            const currentSb = getSupabase();
+            if (!currentSb) {
+              showError('loginError', 'Database connection error. Please refresh.');
+              return;
+            }
+
             console.log('🔑 Logging in:', username.toLowerCase() + '@nexus.local');
 
-            const { data, error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await currentSb.auth.signInWithPassword({
               email: username.toLowerCase() + '@nexus.local',
               password: password
             });
@@ -239,7 +316,7 @@
               return;
             }
 
-            const { data: profile } = await supabase
+            const { data: profile } = await currentSb
               .from('profiles')
               .select('*')
               .eq('id', data.user.id)

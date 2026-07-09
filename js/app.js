@@ -1,4 +1,4 @@
-// js/app.js - COMPLETE FIXED
+// js/app.js - COMPLETE
 // Helper to prevent XSS
 function escapeHtml(text) {
   if (!text) return '';
@@ -7,19 +7,36 @@ function escapeHtml(text) {
   return div.innerHTML;
 }
 
+// Get Supabase client - try multiple sources
+function getSupabase() {
+  if (typeof supabase !== 'undefined' && supabase && typeof supabase.from === 'function') {
+    return supabase;
+  }
+  if (typeof window.supabase !== 'undefined' && window.supabase && typeof window.supabase.from === 'function') {
+    return window.supabase;
+  }
+  if (typeof window.supabaseClient !== 'undefined' && window.supabaseClient && typeof window.supabaseClient.from === 'function') {
+    return window.supabaseClient;
+  }
+  return null;
+}
+
 // Wait for Supabase to be ready
 function waitForSupabase() {
   return new Promise((resolve) => {
-    if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
-      resolve();
-    } else {
-      const checkInterval = setInterval(() => {
-        if (typeof supabase !== 'undefined' && supabase.auth && typeof supabase.from === 'function') {
-          clearInterval(checkInterval);
-          resolve();
-        }
-      }, 100);
+    const sb = getSupabase();
+    if (sb && sb.auth && typeof sb.from === 'function') {
+      resolve(sb);
+      return;
     }
+    
+    const checkInterval = setInterval(() => {
+      const sb2 = getSupabase();
+      if (sb2 && sb2.auth && typeof sb2.from === 'function') {
+        clearInterval(checkInterval);
+        resolve(sb2);
+      }
+    }, 100);
   });
 }
 
@@ -59,8 +76,10 @@ const Nexus = {
     try {
       const offlineDiary = JSON.parse(localStorage.getItem('offline_diary') || '[]');
       if (offlineDiary.length) {
+        const sb = getSupabase();
+        if (!sb) return;
         for (const entry of offlineDiary) {
-          await supabase.from('diary_entries').insert({
+          await sb.from('diary_entries').insert({
             user_id: Nexus.state.user.id,
             content: entry.content,
             mood: entry.mood,
@@ -88,8 +107,14 @@ const Nexus = {
 
     Nexus.state.user = JSON.parse(saved);
     
+    const sb = getSupabase();
+    if (!sb) {
+      Nexus.toast('Database connection error. Please refresh.');
+      return;
+    }
+    
     // Check session with Supabase
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await sb.auth.getSession();
     if (!session) {
       localStorage.removeItem('nexus_user');
       window.location.href = 'login.html';
@@ -183,7 +208,10 @@ const Nexus = {
   async loadProfile() {
     if (!Nexus.state.user) return;
     try {
-      const { data, error } = await supabase
+      const sb = getSupabase();
+      if (!sb) return;
+      
+      const { data, error } = await sb
         .from('profiles')
         .select('*')
         .eq('id', Nexus.state.user.id)
@@ -207,8 +235,11 @@ const Nexus = {
 
   async loadTaskCompletions() {
     try {
+      const sb = getSupabase();
+      if (!sb) return;
+      
       const today = new Date().toISOString().split('T')[0];
-      const { data, error } = await supabase
+      const { data, error } = await sb
         .from('task_completions')
         .select('task_index')
         .eq('user_id', Nexus.state.user.id)
@@ -223,7 +254,10 @@ const Nexus = {
 
   async loadStreakData() {
     try {
-      const { data, error } = await supabase
+      const sb = getSupabase();
+      if (!sb) return;
+      
+      const { data, error } = await sb
         .from('streak_days')
         .select('streak_date')
         .eq('user_id', Nexus.state.user.id);
@@ -241,11 +275,14 @@ const Nexus = {
     if (!confirm('Logout?')) return;
     
     try {
+      const sb = getSupabase();
+      if (!sb) return;
+      
       if (Nexus.state.chatChannel) {
-        supabase.removeChannel(Nexus.state.chatChannel);
+        sb.removeChannel(Nexus.state.chatChannel);
       }
       
-      await supabase.auth.signOut();
+      await sb.auth.signOut();
       localStorage.removeItem('nexus_user');
       window.location.href = 'index.html';
     } catch (error) {
@@ -300,7 +337,9 @@ const Nexus = {
 
   async confirmSelection() {
     if (!Nexus.state.selectedAuras.length) { Nexus.toast('Select at least one'); return; }
-    await supabase.from('profiles').update({ selected_auras: Nexus.state.selectedAuras }).eq('id', Nexus.state.user.id);
+    const sb = getSupabase();
+    if (!sb) return;
+    await sb.from('profiles').update({ selected_auras: Nexus.state.selectedAuras }).eq('id', Nexus.state.user.id);
     Nexus.navigate('social');
     Nexus.toast('Auras activated');
   },
@@ -309,12 +348,15 @@ const Nexus = {
   async toggleTask(index) {
     const today = new Date().toISOString().split('T')[0];
     const idx = Nexus.state.completedTasks.indexOf(index);
+    const sb = getSupabase();
+    if (!sb) return;
+    
     if (idx > -1) {
       Nexus.state.completedTasks.splice(idx, 1);
-      await supabase.from('task_completions').delete().eq('user_id', Nexus.state.user.id).eq('task_index', index).eq('completed_at', today);
+      await sb.from('task_completions').delete().eq('user_id', Nexus.state.user.id).eq('task_index', index).eq('completed_at', today);
     } else {
       Nexus.state.completedTasks.push(index);
-      await supabase.from('task_completions').insert({ user_id: Nexus.state.user.id, task_index: index });
+      await sb.from('task_completions').insert({ user_id: Nexus.state.user.id, task_index: index });
     }
     await Nexus.checkStreak();
     Nexus.renderDashboard();
@@ -325,8 +367,11 @@ const Nexus = {
     const total = tasks.length;
     const done = Nexus.state.completedTasks.filter(i => i < total).length;
     const today = new Date().toISOString().split('T')[0];
+    const sb = getSupabase();
+    if (!sb) return;
+    
     if (done === total && total > 0) {
-      await supabase.from('streak_days').upsert({ user_id: Nexus.state.user.id, streak_date: today }, { onConflict: 'user_id,streak_date' });
+      await sb.from('streak_days').upsert({ user_id: Nexus.state.user.id, streak_date: today }, { onConflict: 'user_id,streak_date' });
       Nexus.state.streakData[today] = true;
     }
   },
@@ -348,8 +393,11 @@ const Nexus = {
   async resetDay() {
     if (!confirm("Reset today's tasks?")) return;
     const today = new Date().toISOString().split('T')[0];
-    await supabase.from('task_completions').delete().eq('user_id', Nexus.state.user.id).eq('completed_at', today);
-    await supabase.from('streak_days').delete().eq('user_id', Nexus.state.user.id).eq('streak_date', today);
+    const sb = getSupabase();
+    if (!sb) return;
+    
+    await sb.from('task_completions').delete().eq('user_id', Nexus.state.user.id).eq('completed_at', today);
+    await sb.from('streak_days').delete().eq('user_id', Nexus.state.user.id).eq('streak_date', today);
     Nexus.state.completedTasks = [];
     delete Nexus.state.streakData[today];
     Nexus.renderDashboard();
@@ -378,9 +426,12 @@ const Nexus = {
     if (streakCount) streakCount.textContent = streak;
     if (tasksDone) tasksDone.textContent = Nexus.state.completedTasks.length;
 
+    const sb = getSupabase();
+    if (!sb) return;
+
     const [{ count: dCount }, { count: mCount }] = await Promise.all([
-      supabase.from('diary_entries').select('*', { count: 'exact', head: true }).eq('user_id', Nexus.state.user.id),
-      supabase.from('chat_messages').select('*', { count: 'exact', head: true }).eq('user_id', Nexus.state.user.id)
+      sb.from('diary_entries').select('*', { count: 'exact', head: true }).eq('user_id', Nexus.state.user.id),
+      sb.from('chat_messages').select('*', { count: 'exact', head: true }).eq('user_id', Nexus.state.user.id)
     ]);
 
     const diaryCount = document.getElementById('diaryCount');
@@ -428,7 +479,9 @@ const Nexus = {
     const newBio = prompt('Edit your bio:', Nexus.state.bio || '');
     if (newBio !== null) {
       Nexus.state.bio = newBio.trim() || 'Building my energy. One aura at a time. ⚡';
-      await supabase.from('profiles').update({ bio: Nexus.state.bio }).eq('id', Nexus.state.user.id);
+      const sb = getSupabase();
+      if (!sb) return;
+      await sb.from('profiles').update({ bio: Nexus.state.bio }).eq('id', Nexus.state.user.id);
       Nexus.renderProfile();
       Nexus.toast('Bio updated');
     }
@@ -437,9 +490,12 @@ const Nexus = {
   async changeUsername() {
     const newName = prompt('Enter new username:', Nexus.state.user.username);
     if (newName && newName.trim()) {
-      const { data: existing } = await supabase.from('profiles').select('id').eq('username', newName.trim()).single();
+      const sb = getSupabase();
+      if (!sb) return;
+      
+      const { data: existing } = await sb.from('profiles').select('id').eq('username', newName.trim()).single();
       if (existing) { Nexus.toast('Username taken'); return; }
-      await supabase.from('profiles').update({ username: newName.trim() }).eq('id', Nexus.state.user.id);
+      await sb.from('profiles').update({ username: newName.trim() }).eq('id', Nexus.state.user.id);
       Nexus.state.user.username = newName.trim();
       localStorage.setItem('nexus_user', JSON.stringify(Nexus.state.user));
       const myUsername = document.getElementById('myUsername');
@@ -461,7 +517,10 @@ const Nexus = {
     if (profileUsername) profileUsername.textContent = '@' + (Nexus.state.user?.username || '—');
     if (profileBio) profileBio.textContent = Nexus.state.bio || 'Building my energy. One aura at a time. ⚡';
 
-    const { data: posts } = await supabase.from('posts').select('*').eq('user_id', Nexus.state.user.id).order('created_at', { ascending: false });
+    const sb = getSupabase();
+    if (!sb) return;
+
+    const { data: posts } = await sb.from('posts').select('*').eq('user_id', Nexus.state.user.id).order('created_at', { ascending: false });
     const userPosts = posts || [];
 
     const profilePosts = document.getElementById('profilePosts');
