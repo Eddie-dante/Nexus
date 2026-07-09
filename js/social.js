@@ -1,61 +1,68 @@
-Nexus.renderStories = function() {
+Nexus.renderStories = async function() {
   const row = document.getElementById('storyRow');
   if (!row) return;
-  const users = [...new Set(Nexus.state.socialPosts.map(p => p.author))];
+
+  const { data: posts } = await supabase.from('posts').select('author, avatar').order('created_at', { ascending: false }).limit(20);
+  const users = [...new Set((posts || []).map(p => p.author))];
+
   if (!users.length) {
     row.innerHTML = '<div style="display:flex;gap:10px;padding:4px 0;color:#94a3b8;font-size:12px;">No stories yet</div>';
     return;
   }
+
   row.innerHTML = users.slice(0, 10).map(u => {
-    const post = Nexus.state.socialPosts.find(p => p.author === u);
+    const post = (posts || []).find(p => p.author === u);
     const emoji = post ? post.avatar : '😊';
     return `<div class="ig-story"><div class="ig-story-avatar"><div class="inner">${emoji}</div></div><span class="ig-story-name">${u}</span></div>`;
   }).join('');
 };
 
-Nexus.createPost = function() {
+Nexus.createPost = async function() {
   const input = document.getElementById('postInput');
+  if (!input) return;
   const text = input.value.trim();
   if (!text) { Nexus.toast('Write something'); return; }
+
   const avatar = Nexus.state.selectedAuras.length ? Nexus.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
   const randImg = UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)];
-  Nexus.state.socialPosts.unshift({
-    id: Date.now().toString(),
+
+  const { error } = await supabase.from('posts').insert({
+    user_id: Nexus.state.user.id,
     author: Nexus.state.user.username,
     avatar,
     text,
-    createdAt: new Date().toISOString(),
-    likes: 0,
     image: randImg
   });
-  Nexus.saveLocalData();
+
+  if (error) { Nexus.toast('Error posting: ' + error.message); return; }
+
   input.value = '';
-  Nexus.renderSocial();
-  Nexus.renderStories();
+  await Nexus.renderSocial();
+  await Nexus.renderStories();
   Nexus.toast('Posted!');
 };
 
-Nexus.likePost = function(postId) {
-  const post = Nexus.state.socialPosts.find(p => p.id === postId);
-  if (!post) return;
-  if (Nexus.state.likedPosts.includes(postId)) {
+Nexus.likePost = async function(postId) {
+  const liked = Nexus.state.likedPosts.includes(postId);
+
+  if (liked) {
+    await supabase.from('post_likes').delete().eq('post_id', postId).eq('user_id', Nexus.state.user.id);
+    await supabase.rpc('decrement_likes', { post_id: postId });
     Nexus.state.likedPosts = Nexus.state.likedPosts.filter(id => id !== postId);
-    post.likes = Math.max(0, post.likes - 1);
   } else {
+    await supabase.from('post_likes').insert({ post_id: postId, user_id: Nexus.state.user.id });
+    await supabase.rpc('increment_likes', { post_id: postId });
     Nexus.state.likedPosts.push(postId);
-    post.likes++;
   }
-  Nexus.saveLocalData();
-  Nexus.renderSocial();
+  await Nexus.renderSocial();
 };
 
-Nexus.deletePost = function(postId) {
+Nexus.deletePost = async function(postId) {
   if (!confirm('Delete this post?')) return;
-  Nexus.state.socialPosts = Nexus.state.socialPosts.filter(p => p.id !== postId);
+  await supabase.from('posts').delete().eq('id', postId);
   Nexus.state.likedPosts = Nexus.state.likedPosts.filter(id => id !== postId);
-  Nexus.saveLocalData();
-  Nexus.renderSocial();
-  Nexus.renderStories();
+  await Nexus.renderSocial();
+  await Nexus.renderStories();
 };
 
 Nexus.timeSince = function(date) {
@@ -68,7 +75,7 @@ Nexus.timeSince = function(date) {
   return date.toLocaleDateString();
 };
 
-Nexus.renderSocial = function() {
+Nexus.renderSocial = async function() {
   const container = document.getElementById('socialFeed');
   if (!container) return;
 
@@ -77,7 +84,15 @@ Nexus.renderSocial = function() {
     avatarEl.textContent = Nexus.state.selectedAuras.length ? Nexus.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
   }
 
-  if (!Nexus.state.socialPosts.length) {
+  const [postsRes, likesRes] = await Promise.all([
+    supabase.from('posts').select('*').order('created_at', { ascending: false }).limit(50),
+    supabase.from('post_likes').select('post_id').eq('user_id', Nexus.state.user.id)
+  ]);
+
+  Nexus.state.likedPosts = (likesRes.data || []).map(l => l.post_id);
+  const posts = postsRes.data || [];
+
+  if (!posts.length) {
     container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#94a3b8;">
       <div style="font-size:48px;margin-bottom:12px;">📸</div>
       <p>No posts yet. Share your journey!</p>
@@ -85,16 +100,16 @@ Nexus.renderSocial = function() {
     return;
   }
 
-  container.innerHTML = Nexus.state.socialPosts.map(p => {
+  container.innerHTML = posts.map(p => {
     const liked = Nexus.state.likedPosts.includes(p.id);
-    const timeAgo = Nexus.timeSince(new Date(p.createdAt));
+    const timeAgo = Nexus.timeSince(new Date(p.created_at));
     return `
       <div class="ig-post">
         <div class="ig-post-header">
-          <div class="ig-post-avatar">${p.avatar}</div>
+          <div class="ig-post-avatar">${p.avatar || '😊'}</div>
           <span class="ig-post-user">${p.author}</span>
           <span class="ig-post-time">${timeAgo}</span>
-          ${p.author === Nexus.state.user?.username ? `<button class="btn-sm btn-danger" onclick="Nexus.deletePost('${p.id}')" style="font-size:11px;padding:2px 8px;">🗑️</button>` : ''}
+          ${p.user_id === Nexus.state.user?.id ? `<button class="btn-sm btn-danger" onclick="Nexus.deletePost('${p.id}')" style="font-size:11px;padding:2px 8px;">🗑️</button>` : ''}
         </div>
         <div class="ig-post-image" style="background-image:url('${p.image || UNSPLASH[0]}')">
           ${p.image ? '' : '📷'}
@@ -104,7 +119,7 @@ Nexus.renderSocial = function() {
           <button class="ig-post-action" onclick="Nexus.toast('Comment feature coming soon')">💬</button>
           <button class="ig-post-action" onclick="Nexus.toast('Share feature coming soon')">📤</button>
         </div>
-        <div class="ig-post-likes">${p.likes} ${p.likes === 1 ? 'like' : 'likes'}</div>
+        <div class="ig-post-likes">${p.likes || 0} ${(p.likes || 0) === 1 ? 'like' : 'likes'}</div>
         <div class="ig-post-caption"><strong>${p.author}</strong> ${p.text}</div>
         <div class="ig-post-comment" onclick="Nexus.toast('Comment feature coming soon')">View all comments</div>
       </div>

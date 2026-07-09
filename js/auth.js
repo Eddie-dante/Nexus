@@ -27,22 +27,20 @@
       if (password !== confirm) { showError('signupError', 'Passwords do not match'); return; }
       if (password.length < 4) { showError('signupError', 'Password must be at least 4 characters'); return; }
 
-      // Check locally first
-      const localUsers = JSON.parse(localStorage.getItem('nexus_local_users') || '{}');
-      if (localUsers[username]) { showError('signupError', 'Username taken on this device'); return; }
+      // Check if username exists in Supabase
+      const { data: existing } = await supabase.from('profiles').select('id').eq('username', username).single();
+      if (existing) { showError('signupError', 'Username already taken'); return; }
 
-      // Try Supabase
       const id = crypto.randomUUID();
-      const { error } = await supabase.from('profiles').insert({ id, username, password });
+      const { error } = await supabase.from('profiles').insert({
+        id,
+        username,
+        password,
+        selected_auras: [],
+        wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80'
+      });
 
-      // Also save locally as backup
-      localUsers[username] = { id, password };
-      localStorage.setItem('nexus_local_users', JSON.stringify(localUsers));
-
-      if (error && error.code !== '23505') {
-        // If Supabase fails but not duplicate, still allow local
-        console.warn('Supabase signup issue, using local:', error.message);
-      }
+      if (error) { showError('signupError', error.message); return; }
 
       localStorage.setItem('nexus_user', JSON.stringify({ id, username }));
       toast('Account created!');
@@ -57,30 +55,16 @@
 
       if (!username || !password) { showError('loginError', 'All fields required'); return; }
 
-      // Try Supabase first
       const { data } = await supabase.from('profiles').select('*').eq('username', username).eq('password', password).single();
 
-      if (data) {
-        localStorage.setItem('nexus_user', JSON.stringify({ id: data.id, username: data.username }));
-        toast('Welcome back!');
-        setTimeout(() => window.location.href = 'app.html', 500);
-        return;
-      }
+      if (!data) { showError('loginError', 'Invalid username or password'); return; }
 
-      // Fallback to local
-      const localUsers = JSON.parse(localStorage.getItem('nexus_local_users') || '{}');
-      if (localUsers[username] && localUsers[username].password === password) {
-        localStorage.setItem('nexus_user', JSON.stringify({ id: localUsers[username].id, username }));
-        toast('Welcome back!');
-        setTimeout(() => window.location.href = 'app.html', 500);
-        return;
-      }
-
-      showError('loginError', 'Invalid username or password');
+      localStorage.setItem('nexus_user', JSON.stringify({ id: data.id, username: data.username }));
+      toast('Welcome back!');
+      setTimeout(() => window.location.href = 'app.html', 500);
     });
   }
 
-  // Redirect if already logged in
   if ((page === 'login.html' || page === 'signup.html') && localStorage.getItem('nexus_user')) {
     window.location.href = 'app.html';
   }
