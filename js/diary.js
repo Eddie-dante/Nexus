@@ -1,4 +1,4 @@
-// js/diary.js - FIXED
+// js/diary.js - COMPLETE
 Nexus.saveDiary = async function() {
   const content = document.getElementById('diaryInput').value.trim();
   const mood = document.getElementById('diaryMood').value.trim() || '—';
@@ -14,7 +14,6 @@ Nexus.saveDiary = async function() {
   Nexus.state.diary.unshift(entry);
   Nexus.saveLocalData();
 
-  // Try to save to Supabase if online
   if (Nexus.state.online) {
     try {
       const { error } = await supabase
@@ -30,14 +29,12 @@ Nexus.saveDiary = async function() {
       Nexus.toast('💾 Saved!');
     } catch (error) {
       console.error('Failed to save diary to cloud:', error);
-      // Save offline backup
       const offline = JSON.parse(localStorage.getItem('offline_diary') || '[]');
       offline.push(entry);
       localStorage.setItem('offline_diary', JSON.stringify(offline));
       Nexus.toast('💾 Saved locally (will sync when online)');
     }
   } else {
-    // Save offline
     const offline = JSON.parse(localStorage.getItem('offline_diary') || '[]');
     offline.push(entry);
     localStorage.setItem('offline_diary', JSON.stringify(offline));
@@ -93,13 +90,6 @@ Nexus.loadDiary = async function() {
   }
 };
 
-// ✅ Helper to prevent XSS
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
 Nexus.renderDiary = function() {
   const container = document.getElementById('diaryEntries');
   if (!container) return;
@@ -125,7 +115,7 @@ Nexus.renderDiary = function() {
     <div class="entry-card">
       <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
         <small style="color:#94a3b8;">${new Date(e.createdAt).toLocaleDateString()} ${new Date(e.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-        <span style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;">${e.mood}</span>
+        <span style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;">${escapeHtml(e.mood)}</span>
       </div>
       <p style="font-size:13px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(e.content)}</p>
       <button class="btn-sm btn-danger" onclick="Nexus.deleteDiary('${e.id}')" style="margin-top:5px;">🗑️</button>

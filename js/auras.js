@@ -1,3 +1,4 @@
+// js/auras.js - COMPLETE
 const AURAS = {
   focus:        { name:'Focus',        emoji:'🎯',   accent:'#ff6b6b', desc:'Concentration', tasks:['Deep work 25 min','No phone 1 hour','Single-task','Clear desk','Pomodoro'] },
   creativity:   { name:'Creativity',   emoji:'🎨',   accent:'#f06595', desc:'Imagination',   tasks:['Free-write 10 min','Sketch/doodle','Brainstorm','New music','Rearrange'] },

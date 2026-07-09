@@ -1,4 +1,4 @@
-// js/chat.js - COMPLETE REWRITE
+// js/chat.js - COMPLETE
 Nexus.initChat = function() {
   if (Nexus.state.chatChannel) {
     supabase.removeChannel(Nexus.state.chatChannel);
@@ -105,6 +105,5 @@ Nexus.renderChat = function() {
 };
 
 Nexus.deleteMessage = function(id) {
-  // Optional: implement if needed
   Nexus.toast('Delete feature coming soon');
 };

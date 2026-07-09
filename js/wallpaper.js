@@ -1,3 +1,4 @@
+// js/wallpapers.js - COMPLETE
 const UNSPLASH = [
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',

@@ -1,4 +1,4 @@
-// js/social.js - FIXED
+// js/social.js - COMPLETE
 Nexus.renderStories = async function() {
   const row = document.getElementById('storyRow');
   if (!row) return;

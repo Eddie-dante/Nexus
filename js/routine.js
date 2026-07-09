@@ -1,4 +1,4 @@
-// js/routine.js - FIXED
+// js/routine.js - COMPLETE
 Nexus.saveRoutine = async function() {
   const title = document.getElementById('routineTitle').value.trim();
   const content = document.getElementById('routineInput').value.trim();
@@ -14,7 +14,6 @@ Nexus.saveRoutine = async function() {
   Nexus.state.routines.unshift(routine);
   Nexus.saveLocalData();
 
-  // Try to save to Supabase
   if (Nexus.state.online) {
     try {
       const { error } = await supabase

@@ -1,4 +1,4 @@
-// js/auth.js - COMPLETE REWRITE
+// js/auth.js - COMPLETE
 (function() {
   const page = window.location.pathname.split('/').pop();
 
@@ -21,8 +21,28 @@
     setTimeout(() => el.style.display = 'none', 4000);
   }
 
+  // Wait for Supabase to be ready
+  function waitForSupabase() {
+    return new Promise((resolve) => {
+      if (typeof supabase !== 'undefined' && supabase.auth) {
+        resolve();
+      } else {
+        const checkInterval = setInterval(() => {
+          if (typeof supabase !== 'undefined' && supabase.auth) {
+            clearInterval(checkInterval);
+            resolve();
+          }
+        }, 100);
+      }
+    });
+  }
+
   async function checkSession() {
     try {
+      if (typeof supabase === 'undefined' || !supabase.auth) {
+        console.warn('Supabase not ready yet');
+        return false;
+      }
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: profile } = await supabase
@@ -44,127 +64,146 @@
     }
   }
 
-  if (page === 'signup.html') {
-    document.getElementById('btnSignup').addEventListener('click', async () => {
-      const username = document.getElementById('signupUsername').value.trim();
-      const password = document.getElementById('signupPassword').value;
-      const confirm = document.getElementById('signupConfirm').value;
+  // Wait for Supabase before initializing
+  waitForSupabase().then(() => {
+    console.log('✅ Supabase ready for auth');
 
-      if (!username || !password) { 
-        showError('signupError', 'All fields required'); 
-        return; 
-      }
-      if (password !== confirm) { 
-        showError('signupError', 'Passwords do not match'); 
-        return; 
-      }
-      if (password.length < 6) { 
-        showError('signupError', 'Password must be at least 6 characters'); 
-        return; 
-      }
+    if (page === 'signup.html') {
+      const btnSignup = document.getElementById('btnSignup');
+      if (btnSignup) {
+        btnSignup.addEventListener('click', async () => {
+          const username = document.getElementById('signupUsername').value.trim();
+          const password = document.getElementById('signupPassword').value;
+          const confirm = document.getElementById('signupConfirm').value;
 
-      try {
-        // ✅ Use Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
-          email: `${username.toLowerCase()}@nexus.local`,
-          password: password,
-          options: {
-            data: { username: username }
+          if (!username || !password) { 
+            showError('signupError', 'All fields required'); 
+            return; 
+          }
+          if (password !== confirm) { 
+            showError('signupError', 'Passwords do not match'); 
+            return; 
+          }
+          if (password.length < 6) { 
+            showError('signupError', 'Password must be at least 6 characters'); 
+            return; 
+          }
+
+          try {
+            // Check if username exists in profiles
+            const { data: existing } = await supabase
+              .from('profiles')
+              .select('id')
+              .eq('username', username)
+              .single();
+
+            if (existing) {
+              showError('signupError', 'Username already taken');
+              return;
+            }
+
+            // Create user with Supabase Auth
+            const { data, error } = await supabase.auth.signUp({
+              email: `${username.toLowerCase()}@nexus.local`,
+              password: password,
+              options: {
+                data: { username: username }
+              }
+            });
+
+            if (error) {
+              if (error.message.includes('already registered')) {
+                showError('signupError', 'Username already taken');
+              } else {
+                showError('signupError', error.message);
+              }
+              return;
+            }
+
+            // Create profile
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                username: username,
+                email: `${username.toLowerCase()}@nexus.local`,
+                selected_auras: [],
+                wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
+                bio: 'Building my energy. One aura at a time. ⚡'
+              });
+
+            if (profileError) {
+              console.error('Profile creation error:', profileError);
+              showError('signupError', 'Failed to create profile');
+              return;
+            }
+
+            localStorage.setItem('nexus_user', JSON.stringify({ 
+              id: data.user.id, 
+              username: username 
+            }));
+
+            toast('Account created! ✨');
+            setTimeout(() => window.location.href = 'app.html', 500);
+          } catch (error) {
+            console.error('Signup error:', error);
+            showError('signupError', 'Something went wrong. Please try again.');
           }
         });
+      }
+    }
 
-        if (error) {
-          if (error.message.includes('already registered')) {
-            showError('signupError', 'Username already taken');
-          } else {
-            showError('signupError', error.message);
+    if (page === 'login.html') {
+      const btnLogin = document.getElementById('btnLogin');
+      if (btnLogin) {
+        btnLogin.addEventListener('click', async () => {
+          const username = document.getElementById('loginUsername').value.trim();
+          const password = document.getElementById('loginPassword').value;
+
+          if (!username || !password) { 
+            showError('loginError', 'All fields required'); 
+            return; 
           }
-          return;
-        }
 
-        // ✅ Create profile
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            username: username,
-            email: `${username.toLowerCase()}@nexus.local`,
-            selected_auras: [],
-            wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
-            bio: 'Building my energy. One aura at a time. ⚡'
-          });
+          try {
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: `${username.toLowerCase()}@nexus.local`,
+              password: password
+            });
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Cleanup
-          await supabase.auth.admin.deleteUser(data.user.id);
-          showError('signupError', 'Failed to create profile');
-          return;
-        }
+            if (error) {
+              showError('loginError', 'Invalid username or password');
+              return;
+            }
 
-        localStorage.setItem('nexus_user', JSON.stringify({ 
-          id: data.user.id, 
-          username: username 
-        }));
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
 
-        toast('Account created! ✨');
-        setTimeout(() => window.location.href = 'app.html', 500);
-      } catch (error) {
-        console.error('Signup error:', error);
-        showError('signupError', 'Something went wrong. Please try again.');
-      }
-    });
-  }
+            localStorage.setItem('nexus_user', JSON.stringify({ 
+              id: data.user.id, 
+              username: profile?.username || username 
+            }));
 
-  if (page === 'login.html') {
-    document.getElementById('btnLogin').addEventListener('click', async () => {
-      const username = document.getElementById('loginUsername').value.trim();
-      const password = document.getElementById('loginPassword').value;
-
-      if (!username || !password) { 
-        showError('loginError', 'All fields required'); 
-        return; 
-      }
-
-      try {
-        // ✅ Use Supabase Auth
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email: `${username.toLowerCase()}@nexus.local`,
-          password: password
+            toast('Welcome back! 👋');
+            setTimeout(() => window.location.href = 'app.html', 500);
+          } catch (error) {
+            console.error('Login error:', error);
+            showError('loginError', 'Something went wrong. Please try again.');
+          }
         });
+      }
+    }
 
-        if (error) {
-          showError('loginError', 'Invalid username or password');
-          return;
+    // Check existing session
+    if ((page === 'login.html' || page === 'signup.html') && localStorage.getItem('nexus_user')) {
+      checkSession().then(hasSession => {
+        if (hasSession) {
+          window.location.href = 'app.html';
         }
-
-        // ✅ Get user profile
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
-
-        localStorage.setItem('nexus_user', JSON.stringify({ 
-          id: data.user.id, 
-          username: profile?.username || username 
-        }));
-
-        toast('Welcome back! 👋');
-        setTimeout(() => window.location.href = 'app.html', 500);
-      } catch (error) {
-        console.error('Login error:', error);
-        showError('loginError', 'Something went wrong. Please try again.');
-      }
-    });
-  }
-
-  // ✅ Check existing session
-  if ((page === 'login.html' || page === 'signup.html') && localStorage.getItem('nexus_user')) {
-    checkSession().then(hasSession => {
-      if (hasSession) {
-        window.location.href = 'app.html';
-      }
-    });
-  }
+      });
+    }
+  });
 })();
