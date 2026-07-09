@@ -19,8 +19,10 @@ const AURAS = {
 
 function getTasks() {
   let tasks = [];
-  Nexus.state.selectedAuras.forEach(key => {
-    if (AURAS[key]) tasks = tasks.concat(AURAS[key].tasks);
-  });
+  if (Nexus && Nexus.state && Nexus.state.selectedAuras) {
+    Nexus.state.selectedAuras.forEach(key => {
+      if (AURAS[key]) tasks = tasks.concat(AURAS[key].tasks);
+    });
+  }
   return [...new Set(tasks)].slice(0, 8);
 }

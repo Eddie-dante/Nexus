@@ -1,4 +1,4 @@
-// js/app.js - COMPLETE STORAGE VERSION
+// js/app.js - COMPLETE WITH FIXED SOCIAL FEED
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -96,6 +96,7 @@ const Nexus = {
     this.state.routines = Storage.getRoutines(userId);
     this.state.posts = Storage.getPosts();
     this.state.chatMessages = Storage.getChatMessages();
+    this.state.completedTasks = Storage.getTasks(userId) || [];
     
     // Load profile
     const profile = Storage.getProfile(userId);
@@ -110,7 +111,6 @@ const Nexus = {
     }
     this.state.onlineUsers = Storage.getOnlineUsers();
     
-    // Update online count in UI
     const onlineCount = document.getElementById('onlineCount');
     if (onlineCount) {
       onlineCount.textContent = Object.keys(this.state.onlineUsers).length;
@@ -136,7 +136,6 @@ const Nexus = {
     s.setAttribute('data-bg', ''); 
     document.head.appendChild(s);
     
-    // Save to profile
     Storage.updateProfile(this.state.user.id, { wallpaper: url });
   },
 
@@ -161,7 +160,6 @@ const Nexus = {
     if (page === 'profile') this.renderProfile();
     if (page === 'wallpapers') this.renderWallpapers();
 
-    // Update online status when navigating to chat
     if (page === 'chat') {
       this.updateOnlineStatus();
       setInterval(() => this.updateOnlineStatus(), 5000);
@@ -249,8 +247,7 @@ const Nexus = {
     } else {
       this.state.completedTasks.push(index);
     }
-    // Save to storage
-    Storage.set(`nexus_tasks_${this.state.user.id}`, this.state.completedTasks);
+    Storage.setTasks(this.state.user.id, this.state.completedTasks);
     this.renderDashboard();
   },
 
@@ -261,18 +258,18 @@ const Nexus = {
     const total = tasks.length;
     const done = this.state.completedTasks.filter(i => i < total).length;
     
-    // Simple streak: if all tasks done today, streak++
+    const streaks = Storage.getStreaks(this.state.user.id);
+    
+    // If all tasks done today, mark streak
     if (done === total && total > 0) {
       const today = new Date().toISOString().split('T')[0];
-      const streaks = Storage.get(`nexus_streaks_${this.state.user.id}`, {});
       if (!streaks[today]) {
         streaks[today] = true;
-        Storage.set(`nexus_streaks_${this.state.user.id}`, streaks);
+        Storage.setStreaks(this.state.user.id, streaks);
       }
     }
     
     // Calculate streak
-    const streaks = Storage.get(`nexus_streaks_${this.state.user.id}`, {});
     for (let i = 0; i < 365; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
@@ -286,7 +283,7 @@ const Nexus = {
   resetDay() {
     if (!confirm("Reset today's tasks?")) return;
     this.state.completedTasks = [];
-    Storage.set(`nexus_tasks_${this.state.user.id}`, []);
+    Storage.setTasks(this.state.user.id, []);
     this.renderDashboard();
   },
 
@@ -300,7 +297,7 @@ const Nexus = {
     ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => { const div = document.createElement('div'); div.className = 'cal-day weekday'; div.textContent = d; cal.appendChild(div); });
     for (let i = 0; i < fd; i++) { const div = document.createElement('div'); div.className = 'cal-day'; div.style.background = 'transparent'; cal.appendChild(div); }
     
-    const streaks = Storage.get(`nexus_streaks_${this.state.user.id}`, {});
+    const streaks = Storage.getStreaks(this.state.user.id);
     for (let d = 1; d <= dim; d++) {
       const ds = new Date(y, m, d).toISOString().split('T')[0];
       const div = document.createElement('div');
@@ -483,7 +480,7 @@ const Nexus = {
     this.renderChatMessages();
   },
 
-  // Social
+  // Social Feed - FIXED
   createPost() {
     const input = document.getElementById('postInput');
     if (!input) return;
@@ -492,7 +489,7 @@ const Nexus = {
 
     const avatar = this.state.selectedAuras.length ? 
       this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
-    const randImg = UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)];
+    const randImg = UNSPLASH ? UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)] : null;
 
     const post = {
       id: generateId(),
@@ -545,39 +542,47 @@ const Nexus = {
         this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
     }
 
-    const posts = this.state.posts;
-    if (!posts.length) {
-      container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#94a3b8;">
-        <div style="font-size:48px;margin-bottom:12px;">📸</div>
-        <p>No posts yet. Share your journey!</p>
-      </div>`;
-      return;
-    }
+    try {
+      const posts = this.state.posts || [];
+      
+      if (!posts.length) {
+        container.innerHTML = `<div style="text-align:center;padding:40px 0;color:#94a3b8;">
+          <div style="font-size:48px;margin-bottom:12px;">📸</div>
+          <p>No posts yet. Share your journey!</p>
+        </div>`;
+        return;
+      }
 
-    container.innerHTML = posts.map(p => {
-      const liked = (p.likes || []).includes(this.state.user.id);
-      const timeAgo = this.timeSince(p.createdAt);
-      return `
-        <div class="ig-post">
-          <div class="ig-post-header">
-            <div class="ig-post-avatar">${escapeHtml(p.avatar || '😊')}</div>
-            <span class="ig-post-user">${escapeHtml(p.author)}</span>
-            <span class="ig-post-time">${timeAgo}</span>
-            ${p.userId === this.state.user?.id ? `<button class="btn-sm btn-danger" onclick="Nexus.deletePost('${p.id}')" style="font-size:11px;padding:2px 8px;">🗑️</button>` : ''}
+      container.innerHTML = posts.map(p => {
+        const liked = (p.likes || []).includes(this.state.user.id);
+        const timeAgo = this.timeSince(p.createdAt);
+        const imageUrl = p.image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80';
+        
+        return `
+          <div class="ig-post">
+            <div class="ig-post-header">
+              <div class="ig-post-avatar">${escapeHtml(p.avatar || '😊')}</div>
+              <span class="ig-post-user">${escapeHtml(p.author)}</span>
+              <span class="ig-post-time">${timeAgo}</span>
+              ${p.userId === this.state.user?.id ? `<button class="btn-sm btn-danger" onclick="Nexus.deletePost('${p.id}')" style="font-size:11px;padding:2px 8px;">🗑️</button>` : ''}
+            </div>
+            <div class="ig-post-image" style="background-image:url('${imageUrl}');background-size:cover;background-position:center;">
+            </div>
+            <div class="ig-post-actions">
+              <button class="ig-post-action ${liked ? 'liked' : ''}" onclick="Nexus.likePost('${p.id}')">${liked ? '❤️' : '🤍'}</button>
+              <button class="ig-post-action" onclick="Nexus.toast('Comment feature coming soon')">💬</button>
+              <button class="ig-post-action" onclick="Nexus.toast('Share feature coming soon')">📤</button>
+            </div>
+            <div class="ig-post-likes">${(p.likes || []).length} ${(p.likes || []).length === 1 ? 'like' : 'likes'}</div>
+            <div class="ig-post-caption"><strong>${escapeHtml(p.author)}</strong> ${escapeHtml(p.text)}</div>
+            <div class="ig-post-comment" onclick="Nexus.toast('Comment feature coming soon')">View all comments</div>
           </div>
-          <div class="ig-post-image" style="background-image:url('${p.image || UNSPLASH[0]}')">
-          </div>
-          <div class="ig-post-actions">
-            <button class="ig-post-action ${liked ? 'liked' : ''}" onclick="Nexus.likePost('${p.id}')">${liked ? '❤️' : '🤍'}</button>
-            <button class="ig-post-action" onclick="Nexus.toast('Comment feature coming soon')">💬</button>
-            <button class="ig-post-action" onclick="Nexus.toast('Share feature coming soon')">📤</button>
-          </div>
-          <div class="ig-post-likes">${(p.likes || []).length} ${(p.likes || []).length === 1 ? 'like' : 'likes'}</div>
-          <div class="ig-post-caption"><strong>${escapeHtml(p.author)}</strong> ${escapeHtml(p.text)}</div>
-          <div class="ig-post-comment" onclick="Nexus.toast('Comment feature coming soon')">View all comments</div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+    } catch (error) {
+      console.error('Render social error:', error);
+      container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:20px;">❌ Failed to load feed</p>';
+    }
   },
 
   // Profile
@@ -594,14 +599,12 @@ const Nexus = {
   changeUsername() {
     const newName = prompt('Enter new username:', this.state.user.username);
     if (newName && newName.trim()) {
-      // Check if username exists
       const users = Storage.getAllUsers();
       if (users.find(u => u.username === newName.trim() && u.id !== this.state.user.id)) {
         this.toast('Username taken');
         return;
       }
       
-      // Update user
       const user = users.find(u => u.id === this.state.user.id);
       if (user) {
         user.username = newName.trim();
@@ -635,14 +638,8 @@ const Nexus = {
       return;
     }
     grid.innerHTML = userPosts.map(p => `
-      <div style="aspect-ratio:1;background-image:url('${p.image || UNSPLASH[0]}');background-size:cover;background-position:center;border-radius:4px;cursor:pointer;" onclick="Nexus.toast('${escapeHtml(p.text.substring(0, 30))}...')"></div>
+      <div style="aspect-ratio:1;background-image:url('${p.image || 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80'}');background-size:cover;background-position:center;border-radius:4px;cursor:pointer;" onclick="Nexus.toast('${escapeHtml(p.text.substring(0, 30))}...')"></div>
     `).join('');
-  },
-
-  logout() {
-    if (!confirm('Logout?')) return;
-    Storage.remove('nexus_user');
-    window.location.href = 'index.html';
   },
 
   // Wallpapers
@@ -654,15 +651,31 @@ const Nexus = {
   },
 
   randomWallpaper() {
-    this.setWallpaper(UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)]);
+    if (UNSPLASH && UNSPLASH.length) {
+      this.setWallpaper(UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)]);
+    }
   },
 
   renderWallpapers() {
-    document.getElementById('wpCount').textContent = UNSPLASH.length + '+ wallpapers';
-    document.getElementById('wpGrid').innerHTML = UNSPLASH.map(url => {
+    document.getElementById('wpCount').textContent = (UNSPLASH ? UNSPLASH.length : 0) + '+ wallpapers';
+    const grid = document.getElementById('wpGrid');
+    if (!grid) return;
+    
+    if (!UNSPLASH || !UNSPLASH.length) {
+      grid.innerHTML = '<p style="color:#94a3b8;text-align:center;">No wallpapers available</p>';
+      return;
+    }
+    
+    grid.innerHTML = UNSPLASH.map(url => {
       const selected = this.state.wallpaper === url;
       return `<div class="wp-thumb${selected ? ' selected' : ''}" style="background-image:url('${url}')" onclick="Nexus.setWallpaper('${url}')"></div>`;
     }).join('');
+  },
+
+  logout() {
+    if (!confirm('Logout?')) return;
+    Storage.remove('nexus_user');
+    window.location.href = 'index.html';
   }
 };
 

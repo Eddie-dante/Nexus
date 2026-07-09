@@ -53,23 +53,3 @@ const UNSPLASH = [
   'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1920&q=80',
   'https://images.unsplash.com/photo-1516796181076-3a4e8a7e00d7?w=1920&q=80'
 ];
-
-Nexus.setWallpaper = function(url) {
-  Nexus.state.wallpaper = url;
-  Nexus.setBg(url);
-  Nexus.saveLocalData();
-  Nexus.renderWallpapers();
-  Nexus.toast('Applied');
-};
-
-Nexus.randomWallpaper = function() {
-  Nexus.setWallpaper(UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)]);
-};
-
-Nexus.renderWallpapers = function() {
-  document.getElementById('wpCount').textContent = UNSPLASH.length + '+ wallpapers';
-  document.getElementById('wpGrid').innerHTML = UNSPLASH.map(url => {
-    const selected = Nexus.state.wallpaper === url;
-    return `<div class="wp-thumb${selected ? ' selected' : ''}" style="background-image:url('${url}')" onclick="Nexus.setWallpaper('${url}')"></div>`;
-  }).join('');
-};
