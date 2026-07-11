@@ -1,4 +1,4 @@
-// server.js - Complete Real-time Server with WebSocket + PostgreSQL
+// server.js - Complete with CORS fixed
 require('dotenv').config();
 const express = require('express');
 const http = require('http');
@@ -13,9 +13,23 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+// ==================== CORS CONFIGURATION - FIXED ====================
+app.use(cors({
+  origin: '*', // Allow all origins for testing
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
+app.use(express.json());
+app.use(express.static('public'));
+
 // ==================== DATABASE ====================
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: process.env.DATABASE_URL || 'postgresql://eddie:zvaGwn5Bgu03lV7kvSPzbyAthKqHH3wW@dpg-d96g990k1i2s73fti8d0-a/wegem',
   ssl: { rejectUnauthorized: false }
 });
 
@@ -99,15 +113,26 @@ async function initDatabase() {
       );
     `);
 
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS followers (
-        id SERIAL PRIMARY KEY,
-        follower_id TEXT REFERENCES users(id) ON DELETE CASCADE,
-        following_id TEXT REFERENCES users(id) ON DELETE CASCADE,
-        created_at TIMESTAMP DEFAULT NOW(),
-        UNIQUE(follower_id, following_id)
-      );
-    `);
+    // Create demo users if none exist
+    const userCheck = await pool.query('SELECT * FROM users LIMIT 1');
+    if (userCheck.rows.length === 0) {
+      const demoUsers = [
+        { id: 'demo_1', username: 'alex', password: 'password123' },
+        { id: 'demo_2', username: 'sarah', password: 'password123' },
+        { id: 'demo_3', username: 'mike', password: 'password123' },
+        { id: 'demo_4', username: 'jessica', password: 'password123' },
+        { id: 'demo_5', username: 'chris', password: 'password123' }
+      ];
+
+      for (const user of demoUsers) {
+        const hashed = await bcrypt.hash(user.password, 10);
+        await pool.query(
+          'INSERT INTO users (id, username, password) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+          [user.id, user.username, hashed]
+        );
+      }
+      console.log('✅ Demo users created: alex, sarah, mike, jessica, chris (password: password123)');
+    }
 
     console.log('✅ All tables created/verified');
   } catch (error) {
@@ -117,19 +142,14 @@ async function initDatabase() {
 
 initDatabase();
 
-// ==================== MIDDLEWARE ====================
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
-
 // ==================== AUTH ====================
 function generateToken(userId) {
-  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ userId }, process.env.JWT_SECRET || 'nexus_super_secret_key_2024', { expiresIn: '7d' });
 }
 
 function verifyToken(token) {
   try {
-    return jwt.verify(token, process.env.JWT_SECRET);
+    return jwt.verify(token, process.env.JWT_SECRET || 'nexus_super_secret_key_2024');
   } catch {
     return null;
   }
@@ -156,7 +176,6 @@ app.post('/api/signup', async (req, res) => {
   }
 
   try {
-    // Check if user exists
     const existing = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Username already taken' });
@@ -638,4 +657,6 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🔌 WebSocket server ready`);
+  console.log(`🌐 API URL: https://nexus-realtime-jsti.onrender.com/api`);
+  console.log(`🔗 WebSocket URL: wss://nexus-realtime-jsti.onrender.com`);
 });

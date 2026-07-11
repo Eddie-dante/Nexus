@@ -25,6 +25,9 @@
             <p style="margin-top:16px;font-size:12px;color:#94a3b8;">
                 Don't have an account? <a href="#" id="showSignup" style="color:#0f172a;font-weight:600;">Create one</a>
             </p>
+            <p style="margin-top:8px;font-size:11px;color:#94a3b8;">
+                Demo users: alex, sarah, mike, jessica, chris (password: password123)
+            </p>
         </div>
     </div>
 
@@ -138,12 +141,12 @@
 
     <script>
         // ==================== CONFIGURATION ====================
-        const API_URL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000/api' 
-            : 'https://nexus-realtime.onrender.com/api';
-        const WS_URL = window.location.hostname === 'localhost' 
-            ? 'ws://localhost:3000' 
-            : 'wss://nexus-realtime.onrender.com';
+        // YOUR ACTUAL RENDER URLs - HARDCODED
+        const API_URL = 'https://nexus-realtime-jsti.onrender.com/api';
+        const WS_URL = 'wss://nexus-realtime-jsti.onrender.com';
+
+        console.log('🔗 API URL:', API_URL);
+        console.log('🔌 WebSocket URL:', WS_URL);
 
         // ==================== STATE ====================
         let ws = null;
@@ -153,7 +156,6 @@
         let onlineUsers = new Map();
         let posts = [];
         let diaryEntries = [];
-        let dashboardData = {};
 
         // ==================== DOM ====================
         const loginPage = document.getElementById('page-login');
@@ -177,6 +179,7 @@
         const socialFeed = document.getElementById('socialFeed');
         const postInput = document.getElementById('postInput');
         const btnCreatePost = document.getElementById('btnCreatePost');
+        const dashboardContent = document.getElementById('dashboardContent');
 
         // ==================== HELPERS ====================
         function escapeHtml(text) {
@@ -208,19 +211,28 @@
 
         // ==================== API HELPERS ====================
         async function apiCall(endpoint, options = {}) {
-            const response = await fetch(`${API_URL}${endpoint}`, {
-                ...options,
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                    ...(options.headers || {})
+            const url = `${API_URL}${endpoint}`;
+            console.log('📡 API Call:', url);
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                        ...(options.headers || {})
+                    }
+                });
+                
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.error || 'Request failed');
                 }
-            });
-            const data = await response.json();
-            if (!response.ok) {
-                throw new Error(data.error || 'Request failed');
+                return data;
+            } catch (error) {
+                console.error('❌ API Error:', error);
+                throw error;
             }
-            return data;
         }
 
         // ==================== AUTH ====================
@@ -306,6 +318,7 @@
         // ==================== WEBSOCKET ====================
         function connectWebSocket() {
             try {
+                console.log('🔌 Connecting to WebSocket:', WS_URL);
                 ws = new WebSocket(WS_URL);
 
                 ws.onopen = () => {
@@ -330,7 +343,6 @@
                 ws.onclose = () => {
                     console.log('🔴 WebSocket disconnected');
                     isConnected = false;
-                    // Reconnect after 3 seconds
                     setTimeout(() => {
                         if (currentUser) {
                             connectWebSocket();
@@ -617,19 +629,17 @@
                     apiCall(`/tasks/${currentUser.id}`),
                     apiCall(`/streaks/${currentUser.id}`)
                 ]);
-                dashboardData = { tasks, streaks };
-                renderDashboard();
+                renderDashboard(tasks, streaks);
             } catch (error) {
                 console.error('Dashboard error:', error);
             }
         }
 
-        function renderDashboard() {
-            const container = document.getElementById('dashboardContent');
-            const taskCount = dashboardData.tasks?.length || 0;
-            const streakCount = Object.keys(dashboardData.streaks || {}).length;
+        function renderDashboard(tasks, streaks) {
+            const taskCount = tasks?.length || 0;
+            const streakCount = Object.keys(streaks || {}).length;
             
-            container.innerHTML = `
+            dashboardContent.innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
                     <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:16px;text-align:center;">
                         <div style="font-size:28px;">✅</div>
@@ -706,13 +716,11 @@
             showPage('page-app');
             connectWebSocket();
             
-            // Load initial data
             loadFeed();
             loadDashboard();
             loadDiary();
             loadProfile();
             
-            // Show social feed by default
             navigateTo('social');
             
             toast(`Welcome ${currentUser.username}! 👋`);
@@ -790,6 +798,8 @@
         }, 30000);
 
         console.log('⚡ Nexus Realtime ready');
+        console.log(`🔗 API: ${API_URL}`);
+        console.log(`🔌 WebSocket: ${WS_URL}`);
     </script>
 </body>
 </html>
