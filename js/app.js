@@ -1,4 +1,4 @@
-// js/app.js - COMPLETE WITH USER LIST & FRIEND MESSAGING
+// js/app.js - COMPLETE
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -37,6 +37,9 @@ const Nexus = {
     }
 
     this.state.user = savedUser;
+    
+    // Seed demo users if no users exist
+    Storage.seedDemoUsers();
     
     // Load all data
     this.loadAllData();
@@ -157,7 +160,6 @@ const Nexus = {
 
   startChat(userId, username) {
     this.state.currentChatUser = { id: userId, username };
-    // Navigate to chat and load messages for this user
     this.navigate('chat');
     this.toast(`💬 Chatting with ${username}`);
   },
@@ -175,11 +177,9 @@ const Nexus = {
 
   setBg(url) {
     this.state.wallpaper = url;
-    // Remove existing style
     const existingStyle = document.querySelector('style[data-bg]');
     if (existingStyle) existingStyle.remove();
     
-    // Create new style
     const s = document.createElement('style');
     s.setAttribute('data-bg', '');
     s.textContent = `body::before{background-image:url('${url}')!important}`;
@@ -487,7 +487,6 @@ const Nexus = {
     const text = input.value.trim();
     if (!text || !this.state.user) return;
 
-    // If we have a current chat user, send to them specifically
     const targetUserId = this.state.currentChatUser?.id || 'all';
 
     const message = {
@@ -534,7 +533,6 @@ const Nexus = {
       return;
     }
     
-    // Show only messages for the current chat user or all messages if no current user
     const filteredMessages = this.state.currentChatUser 
       ? messages.filter(m => m.userId === this.state.currentChatUser.id || m.targetUserId === this.state.user.id || m.userId === this.state.user.id)
       : messages;
@@ -757,7 +755,9 @@ const Nexus = {
     const wpCount = document.getElementById('wpCount');
     const grid = document.getElementById('wpGrid');
     
-    if (wpCount) wpCount.textContent = (UNSPLASH ? UNSPLASH.length : 0) + '+ wallpapers';
+    if (wpCount) {
+      wpCount.textContent = (UNSPLASH ? UNSPLASH.length : 0) + ' wallpapers';
+    }
     if (!grid) return;
     
     if (!UNSPLASH || !UNSPLASH.length) {

@@ -1,6 +1,4 @@
-// js/storage.js - COMPLETE FIXED
-// Simple localStorage wrapper that works everywhere
-
+// js/storage.js - COMPLETE WITH USER MANAGEMENT
 const Storage = {
   // Get data from localStorage
   get(key, defaultValue = null) {
@@ -35,15 +33,34 @@ const Storage = {
     }
   },
 
+  // ==================== USERS ====================
+  
   // Get all users
   getAllUsers() {
     return this.get('nexus_users', []);
+  },
+
+  // Add a new user
+  addUser(user) {
+    const users = this.getAllUsers();
+    // Check if username exists
+    if (users.find(u => u.username === user.username)) {
+      return false;
+    }
+    users.push(user);
+    return this.set('nexus_users', users);
   },
 
   // Find user by username/password
   findUser(username, password) {
     const users = this.getAllUsers();
     return users.find(u => u.username === username && u.password === password) || null;
+  },
+
+  // Find user by id
+  findUserById(id) {
+    const users = this.getAllUsers();
+    return users.find(u => u.id === id) || null;
   },
 
   // Get current user
@@ -56,12 +73,27 @@ const Storage = {
     return this.set('nexus_user', user);
   },
 
-  // Get chat messages
+  // ==================== FRIENDS ====================
+  
+  getFriends(userId) {
+    return this.get(`nexus_friends_${userId}`, []);
+  },
+
+  addFriend(userId, friendId) {
+    const friends = this.getFriends(userId);
+    if (!friends.includes(friendId)) {
+      friends.push(friendId);
+      return this.set(`nexus_friends_${userId}`, friends);
+    }
+    return true;
+  },
+
+  // ==================== CHAT ====================
+
   getChatMessages() {
     return this.get('nexus_chat', []);
   },
 
-  // Add chat message
   addChatMessage(message) {
     const messages = this.getChatMessages();
     messages.push(message);
@@ -71,50 +103,48 @@ const Storage = {
     return this.set('nexus_chat', messages);
   },
 
-  // Get diary entries
+  // ==================== DIARY ====================
+
   getDiaryEntries(userId) {
     return this.get(`nexus_diary_${userId}`, []);
   },
 
-  // Add diary entry
   addDiaryEntry(userId, entry) {
     const entries = this.getDiaryEntries(userId);
     entries.unshift(entry);
     return this.set(`nexus_diary_${userId}`, entries);
   },
 
-  // Delete diary entry
   deleteDiaryEntry(userId, entryId) {
     const entries = this.getDiaryEntries(userId);
     const filtered = entries.filter(e => e.id !== entryId);
     return this.set(`nexus_diary_${userId}`, filtered);
   },
 
-  // Get routines
+  // ==================== ROUTINES ====================
+
   getRoutines(userId) {
     return this.get(`nexus_routines_${userId}`, []);
   },
 
-  // Add routine
   addRoutine(userId, routine) {
     const routines = this.getRoutines(userId);
     routines.unshift(routine);
     return this.set(`nexus_routines_${userId}`, routines);
   },
 
-  // Delete routine
   deleteRoutine(userId, routineId) {
     const routines = this.getRoutines(userId);
     const filtered = routines.filter(r => r.id !== routineId);
     return this.set(`nexus_routines_${userId}`, filtered);
   },
 
-  // Get posts
+  // ==================== POSTS ====================
+
   getPosts() {
     return this.get('nexus_posts', []);
   },
 
-  // Add post
   addPost(post) {
     const posts = this.getPosts();
     posts.unshift(post);
@@ -124,14 +154,12 @@ const Storage = {
     return this.set('nexus_posts', posts);
   },
 
-  // Delete post
   deletePost(postId) {
     const posts = this.getPosts();
     const filtered = posts.filter(p => p.id !== postId);
     return this.set('nexus_posts', filtered);
   },
 
-  // Toggle like
   toggleLike(postId, userId) {
     const posts = this.getPosts();
     const post = posts.find(p => p.id === postId);
@@ -147,12 +175,12 @@ const Storage = {
     return this.set('nexus_posts', posts);
   },
 
-  // Get online users
+  // ==================== ONLINE USERS ====================
+
   getOnlineUsers() {
     return this.get('nexus_online', {});
   },
 
-  // Update online status
   updateOnlineStatus(username) {
     const online = this.getOnlineUsers();
     online[username] = Date.now();
@@ -165,7 +193,8 @@ const Storage = {
     return this.set('nexus_online', online);
   },
 
-  // Get profile
+  // ==================== PROFILE ====================
+
   getProfile(userId) {
     return this.get(`nexus_profile_${userId}`, {
       bio: 'Building my energy. One aura at a time. ⚡',
@@ -174,31 +203,58 @@ const Storage = {
     });
   },
 
-  // Update profile
   updateProfile(userId, profile) {
     const current = this.getProfile(userId);
     const updated = { ...current, ...profile };
     return this.set(`nexus_profile_${userId}`, updated);
   },
 
-  // Get tasks
+  // ==================== TASKS ====================
+
   getTasks(userId) {
     return this.get(`nexus_tasks_${userId}`, []);
   },
 
-  // Set tasks
   setTasks(userId, tasks) {
     return this.set(`nexus_tasks_${userId}`, tasks);
   },
 
-  // Get streaks
+  // ==================== STREAKS ====================
+
   getStreaks(userId) {
     return this.get(`nexus_streaks_${userId}`, {});
   },
 
-  // Set streaks
   setStreaks(userId, streaks) {
     return this.set(`nexus_streaks_${userId}`, streaks);
+  },
+
+  // ==================== SEED DEMO USERS ====================
+
+  seedDemoUsers() {
+    const users = this.getAllUsers();
+    if (users.length === 0) {
+      // Create some demo users
+      const demoUsers = [
+        { id: 'demo_user_1', username: 'alex', password: 'password123', created: new Date().toISOString() },
+        { id: 'demo_user_2', username: 'sarah', password: 'password123', created: new Date().toISOString() },
+        { id: 'demo_user_3', username: 'mike', password: 'password123', created: new Date().toISOString() },
+        { id: 'demo_user_4', username: 'jessica', password: 'password123', created: new Date().toISOString() },
+        { id: 'demo_user_5', username: 'chris', password: 'password123', created: new Date().toISOString() }
+      ];
+      
+      // Add each demo user
+      demoUsers.forEach(u => {
+        this.addUser(u);
+        // Create profiles for demo users
+        this.updateProfile(u.id, {
+          bio: `Hi, I'm ${u.username}! 👋`,
+          selectedAuras: ['focus', 'creativity']
+        });
+      });
+      
+      console.log('✅ Demo users created!');
+    }
   }
 };
 
