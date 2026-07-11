@@ -1,7 +1,7 @@
 {
   "name": "nexus-realtime",
   "version": "1.0.0",
-  "description": "Real-time social app like Instagram",
+  "description": "Real-time social app with WebSocket + PostgreSQL",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
