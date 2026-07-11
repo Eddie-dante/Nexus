@@ -1,184 +1,208 @@
-// js/api.js - Complete API Client
-(function() {
-  // Get base URL from global variable
-  const API_BASE_URL = typeof API_BASE_URL !== 'undefined' ? API_BASE_URL : 'http://localhost:3000/api';
+// js/storage.js - COMPLETE FIXED
+// Simple localStorage wrapper that works everywhere
 
-  const API = {
-    baseURL: API_BASE_URL,
-
-    // Helper for fetch requests
-    async request(endpoint, options = {}) {
-      const url = `${this.baseURL}${endpoint}`;
-      try {
-        const response = await fetch(url, {
-          ...options,
-          headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-          }
-        });
-        
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Request failed');
-        }
-        return data;
-      } catch (error) {
-        console.error('API Error:', error);
-        throw error;
-      }
-    },
-
-    // ==================== USERS ====================
-    
-    signup(username, password) {
-      return this.request('/signup', {
-        method: 'POST',
-        body: JSON.stringify({ username, password })
-      });
-    },
-
-    login(username, password) {
-      return this.request('/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password })
-      });
-    },
-
-    getUser(id) {
-      return this.request(`/users/${id}`);
-    },
-
-    // ==================== PROFILES ====================
-
-    getProfile(userId) {
-      return this.request(`/profiles/${userId}`);
-    },
-
-    updateProfile(userId, data) {
-      return this.request(`/profiles/${userId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
-    },
-
-    // ==================== CHAT ====================
-
-    getChatMessages() {
-      return this.request('/chat');
-    },
-
-    sendMessage(userId, username, content) {
-      return this.request('/chat', {
-        method: 'POST',
-        body: JSON.stringify({ user_id: userId, username, content })
-      });
-    },
-
-    deleteMessage(id) {
-      return this.request(`/chat/${id}`, {
-        method: 'DELETE'
-      });
-    },
-
-    // ==================== DIARY ====================
-
-    getDiaryEntries(userId) {
-      return this.request(`/diary/${userId}`);
-    },
-
-    addDiaryEntry(userId, content, mood) {
-      return this.request('/diary', {
-        method: 'POST',
-        body: JSON.stringify({ user_id: userId, content, mood })
-      });
-    },
-
-    deleteDiaryEntry(id) {
-      return this.request(`/diary/${id}`, {
-        method: 'DELETE'
-      });
-    },
-
-    // ==================== ROUTINES ====================
-
-    getRoutines(userId) {
-      return this.request(`/routines/${userId}`);
-    },
-
-    addRoutine(userId, title, content) {
-      return this.request('/routines', {
-        method: 'POST',
-        body: JSON.stringify({ user_id: userId, title, content })
-      });
-    },
-
-    deleteRoutine(id) {
-      return this.request(`/routines/${id}`, {
-        method: 'DELETE'
-      });
-    },
-
-    // ==================== POSTS ====================
-
-    getPosts() {
-      return this.request('/posts');
-    },
-
-    addPost(userId, author, avatar, text, image) {
-      return this.request('/posts', {
-        method: 'POST',
-        body: JSON.stringify({ user_id: userId, author, avatar, text, image })
-      });
-    },
-
-    deletePost(id) {
-      return this.request(`/posts/${id}`, {
-        method: 'DELETE'
-      });
-    },
-
-    likePost(postId, userId) {
-      return this.request(`/posts/${postId}/like`, {
-        method: 'POST',
-        body: JSON.stringify({ user_id: userId })
-      });
-    },
-
-    // ==================== TASKS ====================
-
-    getTasks(userId) {
-      return this.request(`/tasks/${userId}`);
-    },
-
-    toggleTask(userId, taskIndex) {
-      return this.request(`/tasks/${userId}/toggle`, {
-        method: 'POST',
-        body: JSON.stringify({ task_index: taskIndex })
-      });
-    },
-
-    // ==================== STREAKS ====================
-
-    getStreaks(userId) {
-      return this.request(`/streaks/${userId}`);
-    },
-
-    markStreak(userId) {
-      return this.request(`/streaks/${userId}`, {
-        method: 'POST'
-      });
-    },
-
-    // ==================== HEALTH ====================
-
-    health() {
-      return this.request('/health');
+const Storage = {
+  // Get data from localStorage
+  get(key, defaultValue = null) {
+    try {
+      const data = localStorage.getItem(key);
+      return data ? JSON.parse(data) : defaultValue;
+    } catch (error) {
+      console.error('Storage get error:', error);
+      return defaultValue;
     }
-  };
+  },
 
-  // Make it globally available
-  window.API = API;
+  // Set data in localStorage
+  set(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+      return true;
+    } catch (error) {
+      console.error('Storage set error:', error);
+      return false;
+    }
+  },
 
-  console.log('✅ API client ready, baseURL:', API_BASE_URL);
-})();
+  // Remove data
+  remove(key) {
+    try {
+      localStorage.removeItem(key);
+      return true;
+    } catch (error) {
+      console.error('Storage remove error:', error);
+      return false;
+    }
+  },
+
+  // Get all users
+  getAllUsers() {
+    return this.get('nexus_users', []);
+  },
+
+  // Find user by username/password
+  findUser(username, password) {
+    const users = this.getAllUsers();
+    return users.find(u => u.username === username && u.password === password) || null;
+  },
+
+  // Get current user
+  getUser() {
+    return this.get('nexus_user');
+  },
+
+  // Set current user
+  setUser(user) {
+    return this.set('nexus_user', user);
+  },
+
+  // Get chat messages
+  getChatMessages() {
+    return this.get('nexus_chat', []);
+  },
+
+  // Add chat message
+  addChatMessage(message) {
+    const messages = this.getChatMessages();
+    messages.push(message);
+    if (messages.length > 500) {
+      messages.splice(0, messages.length - 500);
+    }
+    return this.set('nexus_chat', messages);
+  },
+
+  // Get diary entries
+  getDiaryEntries(userId) {
+    return this.get(`nexus_diary_${userId}`, []);
+  },
+
+  // Add diary entry
+  addDiaryEntry(userId, entry) {
+    const entries = this.getDiaryEntries(userId);
+    entries.unshift(entry);
+    return this.set(`nexus_diary_${userId}`, entries);
+  },
+
+  // Delete diary entry
+  deleteDiaryEntry(userId, entryId) {
+    const entries = this.getDiaryEntries(userId);
+    const filtered = entries.filter(e => e.id !== entryId);
+    return this.set(`nexus_diary_${userId}`, filtered);
+  },
+
+  // Get routines
+  getRoutines(userId) {
+    return this.get(`nexus_routines_${userId}`, []);
+  },
+
+  // Add routine
+  addRoutine(userId, routine) {
+    const routines = this.getRoutines(userId);
+    routines.unshift(routine);
+    return this.set(`nexus_routines_${userId}`, routines);
+  },
+
+  // Delete routine
+  deleteRoutine(userId, routineId) {
+    const routines = this.getRoutines(userId);
+    const filtered = routines.filter(r => r.id !== routineId);
+    return this.set(`nexus_routines_${userId}`, filtered);
+  },
+
+  // Get posts
+  getPosts() {
+    return this.get('nexus_posts', []);
+  },
+
+  // Add post
+  addPost(post) {
+    const posts = this.getPosts();
+    posts.unshift(post);
+    if (posts.length > 100) {
+      posts.splice(100);
+    }
+    return this.set('nexus_posts', posts);
+  },
+
+  // Delete post
+  deletePost(postId) {
+    const posts = this.getPosts();
+    const filtered = posts.filter(p => p.id !== postId);
+    return this.set('nexus_posts', filtered);
+  },
+
+  // Toggle like
+  toggleLike(postId, userId) {
+    const posts = this.getPosts();
+    const post = posts.find(p => p.id === postId);
+    if (!post) return false;
+    
+    if (!post.likes) post.likes = [];
+    const index = post.likes.indexOf(userId);
+    if (index > -1) {
+      post.likes.splice(index, 1);
+    } else {
+      post.likes.push(userId);
+    }
+    return this.set('nexus_posts', posts);
+  },
+
+  // Get online users
+  getOnlineUsers() {
+    return this.get('nexus_online', {});
+  },
+
+  // Update online status
+  updateOnlineStatus(username) {
+    const online = this.getOnlineUsers();
+    online[username] = Date.now();
+    const now = Date.now();
+    for (const [key, value] of Object.entries(online)) {
+      if (now - value > 30000) {
+        delete online[key];
+      }
+    }
+    return this.set('nexus_online', online);
+  },
+
+  // Get profile
+  getProfile(userId) {
+    return this.get(`nexus_profile_${userId}`, {
+      bio: 'Building my energy. One aura at a time. ⚡',
+      wallpaper: 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
+      selectedAuras: []
+    });
+  },
+
+  // Update profile
+  updateProfile(userId, profile) {
+    const current = this.getProfile(userId);
+    const updated = { ...current, ...profile };
+    return this.set(`nexus_profile_${userId}`, updated);
+  },
+
+  // Get tasks
+  getTasks(userId) {
+    return this.get(`nexus_tasks_${userId}`, []);
+  },
+
+  // Set tasks
+  setTasks(userId, tasks) {
+    return this.set(`nexus_tasks_${userId}`, tasks);
+  },
+
+  // Get streaks
+  getStreaks(userId) {
+    return this.get(`nexus_streaks_${userId}`, {});
+  },
+
+  // Set streaks
+  setStreaks(userId, streaks) {
+    return this.set(`nexus_streaks_${userId}`, streaks);
+  }
+};
+
+// Make it globally available
+window.Storage = Storage;
+
+console.log('✅ Storage ready (localStorage mode)');
