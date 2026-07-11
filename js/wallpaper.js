@@ -1,5 +1,6 @@
-// js/wallpapers.js - COMPLETE
+// js/wallpapers.js - COMPLETE WITH MORE WALLPAPERS
 const UNSPLASH = [
+  // Nature & Landscapes
   'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
   'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',
   'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
@@ -19,12 +20,8 @@ const UNSPLASH = [
   'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80',
   'https://images.unsplash.com/photo-1511818966892-d7b671e67291?w=1920&q=80',
   'https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?w=1920&q=80',
-  'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
-  'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=1920&q=80',
-  'https://images.unsplash.com/photo-1557682260-96773eb01377?w=1920&q=80',
-  'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1920&q=80',
-  'https://images.unsplash.com/photo-1558470598-a5dda9640f68?w=1920&q=80',
-  'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80',
+  
+  // Abstract & Art
   'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1920&q=80',
   'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=1920&q=80',
   'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=1920&q=80',
@@ -44,6 +41,8 @@ const UNSPLASH = [
   'https://images.unsplash.com/photo-1485988412941-77a35537dae4?w=1920&q=80',
   'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1920&q=80',
   'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80',
+  
+  // Dark & Moody
   'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1920&q=80',
   'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1920&q=80',
   'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=1920&q=80',
@@ -51,5 +50,35 @@ const UNSPLASH = [
   'https://images.unsplash.com/photo-1515630278258-407f66498911?w=1920&q=80',
   'https://images.unsplash.com/photo-1491466424936-e304919aada7?w=1920&q=80',
   'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1920&q=80',
-  'https://images.unsplash.com/photo-1516796181076-3a4e8a7e00d7?w=1920&q=80'
+  'https://images.unsplash.com/photo-1516796181076-3a4e8a7e00d7?w=1920&q=80',
+  
+  // Colors & Gradients
+  'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
+  'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=1920&q=80',
+  'https://images.unsplash.com/photo-1557682260-96773eb01377?w=1920&q=80',
+  'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1920&q=80',
+  'https://images.unsplash.com/photo-1558470598-a5dda9640f68?w=1920&q=80',
+  'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80',
+  
+  // City & Architecture
+  'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1920&q=80',
+  'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80',
+  'https://images.unsplash.com/photo-1511818966892-d7b671e67291?w=1920&q=80',
+  
+  // Space & Cosmos
+  'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
+  
+  // More Nature
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=80',
+  'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
+  'https://images.unsplash.com/photo-1470071459606-7b9ec58a3b43?w=1920&q=80',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80',
 ];
+
+// Add even more wallpapers dynamically
+for (let i = 0; i < 50; i++) {
+    UNSPLASH.push(`https://picsum.photos/1920/1080?random=${i}`);
+}

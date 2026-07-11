@@ -1,4 +1,4 @@
-// js/app.js - COMPLETE FIXED
+// js/app.js - COMPLETE WITH USER LIST & FRIEND MESSAGING
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -23,7 +23,10 @@ const Nexus = {
     routines: [],
     onlineUsers: {},
     posts: [],
-    chatMessages: []
+    chatMessages: [],
+    allUsers: [],
+    friends: [],
+    currentChatUser: null
   },
 
   async init() {
@@ -37,6 +40,7 @@ const Nexus = {
     
     // Load all data
     this.loadAllData();
+    this.loadUsers();
     this.setBg(this.state.wallpaper);
 
     // Button listeners
@@ -53,7 +57,6 @@ const Nexus = {
     document.getElementById('btnLogout')?.addEventListener('click', () => this.logout());
     document.getElementById('btnProfileDashboard')?.addEventListener('click', () => this.navigate('dashboard'));
     document.getElementById('btnProfileAuras')?.addEventListener('click', () => this.navigate('select'));
-    document.getElementById('btnWalls')?.addEventListener('click', () => this.navigate('wallpapers'));
     document.getElementById('btnNewPost')?.addEventListener('click', () => {
       const input = document.getElementById('postInput');
       if (input) input.focus();
@@ -87,7 +90,15 @@ const Nexus = {
     this.updateOnlineStatus();
 
     this.navigate(this.state.selectedAuras.length ? 'social' : 'select');
-    console.log('⚡ Nexus · id³ ready (local storage mode)');
+    console.log('⚡ Nexus · id³ ready');
+  },
+
+  loadUsers() {
+    // Get all users from storage
+    this.state.allUsers = Storage.getAllUsers();
+    // Get friends (users who have chatted with the current user)
+    const friends = Storage.get(`nexus_friends_${this.state.user.id}`, []);
+    this.state.friends = friends;
   },
 
   loadAllData() {
@@ -98,7 +109,6 @@ const Nexus = {
     this.state.chatMessages = Storage.getChatMessages();
     this.state.completedTasks = Storage.getTasks(userId) || [];
     
-    // Load profile
     const profile = Storage.getProfile(userId);
     this.state.selectedAuras = profile.selectedAuras || [];
     this.state.wallpaper = profile.wallpaper || this.state.wallpaper;
@@ -115,6 +125,41 @@ const Nexus = {
     if (onlineCount) {
       onlineCount.textContent = Object.keys(this.state.onlineUsers).length;
     }
+    
+    // Update user list
+    this.renderUserList();
+  },
+
+  renderUserList() {
+    const container = document.getElementById('usersListContainer');
+    if (!container) return;
+    
+    // Get all users except current user
+    const allUsers = this.state.allUsers || [];
+    const currentUser = this.state.user;
+    const otherUsers = allUsers.filter(u => u.id !== currentUser?.id);
+    
+    if (otherUsers.length === 0) {
+      container.innerHTML = '<span style="font-size:11px;color:#94a3b8;">No other users yet. Invite friends!</span>';
+      return;
+    }
+    
+    container.innerHTML = otherUsers.map(u => {
+      const isOnline = this.state.onlineUsers[u.username];
+      const isFriend = this.state.friends.includes(u.id);
+      return `<span onclick="Nexus.startChat('${u.id}', '${escapeHtml(u.username)}')" 
+                   style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:12px;cursor:pointer;background:${isOnline ? 'rgba(74,222,128,0.2)' : 'rgba(0,0,0,0.04)'};border:1px solid ${isOnline ? '#4ade80' : 'transparent'};font-size:11px;">
+                ${isOnline ? '🟢' : '⚪'} ${escapeHtml(u.username)}
+                ${isFriend ? ' ⭐' : ''}
+              </span>`;
+    }).join('');
+  },
+
+  startChat(userId, username) {
+    this.state.currentChatUser = { id: userId, username };
+    // Navigate to chat and load messages for this user
+    this.navigate('chat');
+    this.toast(`💬 Chatting with ${username}`);
   },
 
   toast(msg, duration = 2200) {
@@ -442,10 +487,14 @@ const Nexus = {
     const text = input.value.trim();
     if (!text || !this.state.user) return;
 
+    // If we have a current chat user, send to them specifically
+    const targetUserId = this.state.currentChatUser?.id || 'all';
+
     const message = {
       id: generateId(),
       username: this.state.user.username,
       userId: this.state.user.id,
+      targetUserId: targetUserId,
       content: text,
       createdAt: new Date().toISOString()
     };
@@ -454,12 +503,25 @@ const Nexus = {
     this.state.chatMessages = Storage.getChatMessages();
     input.value = '';
     this.renderChatMessages();
+    
+    // Add to friends if not already
+    if (targetUserId !== 'all') {
+      const friends = Storage.get(`nexus_friends_${this.state.user.id}`, []);
+      if (!friends.includes(targetUserId)) {
+        friends.push(targetUserId);
+        Storage.set(`nexus_friends_${this.state.user.id}`, friends);
+        this.state.friends = friends;
+      }
+    }
   },
 
   renderChat() {
     const myUsername = document.getElementById('myUsername');
     if (myUsername) myUsername.textContent = this.state.user?.username || '—';
+    this.renderUserList();
     this.renderChatMessages();
+    this.updateOnlineStatus();
+    setInterval(() => this.updateOnlineStatus(), 5000);
   },
 
   renderChatMessages() {
@@ -472,7 +534,17 @@ const Nexus = {
       return;
     }
     
-    container.innerHTML = messages.map(m => {
+    // Show only messages for the current chat user or all messages if no current user
+    const filteredMessages = this.state.currentChatUser 
+      ? messages.filter(m => m.userId === this.state.currentChatUser.id || m.targetUserId === this.state.user.id || m.userId === this.state.user.id)
+      : messages;
+    
+    if (!filteredMessages.length) {
+      container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:16px;">💬 No messages with this user yet. Say hi!</p>';
+      return;
+    }
+    
+    container.innerHTML = filteredMessages.map(m => {
       const me = m.userId === this.state.user?.id;
       const time = new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       return `<div style="display:flex;justify-content:${me ? 'flex-end' : 'flex-start'};margin:3px 0;">
