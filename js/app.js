@@ -1,4 +1,4 @@
-// js/app.js - COMPLETE WITH FIXED SOCIAL FEED
+// js/app.js - COMPLETE FIXED
 function escapeHtml(text) {
   if (!text) return '';
   const div = document.createElement('div');
@@ -130,10 +130,14 @@ const Nexus = {
 
   setBg(url) {
     this.state.wallpaper = url;
+    // Remove existing style
+    const existingStyle = document.querySelector('style[data-bg]');
+    if (existingStyle) existingStyle.remove();
+    
+    // Create new style
     const s = document.createElement('style');
+    s.setAttribute('data-bg', '');
     s.textContent = `body::before{background-image:url('${url}')!important}`;
-    document.querySelector('style[data-bg]')?.remove();
-    s.setAttribute('data-bg', ''); 
     document.head.appendChild(s);
     
     Storage.updateProfile(this.state.user.id, { wallpaper: url });
@@ -149,7 +153,10 @@ const Nexus = {
       if (b.dataset.page === page) b.classList.add('active');
     });
 
-    document.getElementById('bottomNav').style.display = (page === 'select') ? 'none' : 'flex';
+    const bottomNav = document.getElementById('bottomNav');
+    if (bottomNav) {
+      bottomNav.style.display = (page === 'select') ? 'none' : 'flex';
+    }
 
     if (page === 'select') this.renderAuraGrid();
     if (page === 'dashboard') this.renderDashboard();
@@ -214,14 +221,23 @@ const Nexus = {
     const circ = 2 * Math.PI * 43;
     const offset = circ - (pct / 100) * circ;
 
-    document.getElementById('homeTitle').textContent = this.state.selectedAuras.map(k => AURAS[k].emoji + ' ' + AURAS[k].name).join(' + ');
-    document.getElementById('homeBadge').textContent = '⚡ ' + this.state.selectedAuras.map(k => AURAS[k].emoji).join('');
-    document.getElementById('score').textContent = pct + '%';
-    document.getElementById('taskProgress').textContent = done + '/' + total;
-    document.getElementById('streakCount').textContent = streak;
-    document.getElementById('tasksDone').textContent = done;
-    document.getElementById('diaryCount').textContent = this.state.diary.length;
-    document.getElementById('msgCount').textContent = this.state.chatMessages.length;
+    const homeTitle = document.getElementById('homeTitle');
+    const homeBadge = document.getElementById('homeBadge');
+    const scoreEl = document.getElementById('score');
+    const taskProgress = document.getElementById('taskProgress');
+    const streakCount = document.getElementById('streakCount');
+    const tasksDone = document.getElementById('tasksDone');
+    const diaryCount = document.getElementById('diaryCount');
+    const msgCount = document.getElementById('msgCount');
+
+    if (homeTitle) homeTitle.textContent = this.state.selectedAuras.map(k => AURAS[k].emoji + ' ' + AURAS[k].name).join(' + ');
+    if (homeBadge) homeBadge.textContent = '⚡ ' + this.state.selectedAuras.map(k => AURAS[k].emoji).join('');
+    if (scoreEl) scoreEl.textContent = pct + '%';
+    if (taskProgress) taskProgress.textContent = done + '/' + total;
+    if (streakCount) streakCount.textContent = streak;
+    if (tasksDone) tasksDone.textContent = done;
+    if (diaryCount) diaryCount.textContent = this.state.diary.length;
+    if (msgCount) msgCount.textContent = this.state.chatMessages.length;
 
     const ring = document.getElementById('scoreRing');
     if (ring) {
@@ -260,7 +276,6 @@ const Nexus = {
     
     const streaks = Storage.getStreaks(this.state.user.id);
     
-    // If all tasks done today, mark streak
     if (done === total && total > 0) {
       const today = new Date().toISOString().split('T')[0];
       if (!streaks[today]) {
@@ -269,7 +284,6 @@ const Nexus = {
       }
     }
     
-    // Calculate streak
     for (let i = 0; i < 365; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
@@ -289,7 +303,8 @@ const Nexus = {
 
   renderCalendar() {
     const now = new Date(), y = now.getFullYear(), m = now.getMonth(), dim = new Date(y, m + 1, 0).getDate(), fd = new Date(y, m, 1).getDay();
-    document.getElementById('monthLabel').textContent = now.toLocaleDateString('en', { month: 'long', year: 'numeric' });
+    const monthLabel = document.getElementById('monthLabel');
+    if (monthLabel) monthLabel.textContent = now.toLocaleDateString('en', { month: 'long', year: 'numeric' });
 
     const cal = document.getElementById('calendar');
     if (!cal) return;
@@ -442,7 +457,8 @@ const Nexus = {
   },
 
   renderChat() {
-    document.getElementById('myUsername').textContent = this.state.user?.username || '—';
+    const myUsername = document.getElementById('myUsername');
+    if (myUsername) myUsername.textContent = this.state.user?.username || '—';
     this.renderChatMessages();
   },
 
@@ -480,7 +496,7 @@ const Nexus = {
     this.renderChatMessages();
   },
 
-  // Social Feed - FIXED
+  // Social Feed
   createPost() {
     const input = document.getElementById('postInput');
     if (!input) return;
@@ -621,15 +637,24 @@ const Nexus = {
     const avatarEmoji = this.state.selectedAuras.length ? 
       this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
 
-    document.getElementById('profileAvatarEmoji').textContent = avatarEmoji;
-    document.getElementById('profileName').textContent = this.state.user?.username || '—';
-    document.getElementById('profileUsername').textContent = '@' + (this.state.user?.username || '—');
-    document.getElementById('profileBio').textContent = this.state.bio || 'Building my energy. One aura at a time. ⚡';
+    const profileAvatarEmoji = document.getElementById('profileAvatarEmoji');
+    const profileName = document.getElementById('profileName');
+    const profileUsername = document.getElementById('profileUsername');
+    const profileBio = document.getElementById('profileBio');
+
+    if (profileAvatarEmoji) profileAvatarEmoji.textContent = avatarEmoji;
+    if (profileName) profileName.textContent = this.state.user?.username || '—';
+    if (profileUsername) profileUsername.textContent = '@' + (this.state.user?.username || '—');
+    if (profileBio) profileBio.textContent = this.state.bio || 'Building my energy. One aura at a time. ⚡';
 
     const userPosts = this.state.posts.filter(p => p.userId === this.state.user.id);
-    document.getElementById('profilePosts').textContent = userPosts.length;
-    document.getElementById('profileFollowers').textContent = Math.floor(Math.random() * 100) + 10;
-    document.getElementById('profileFollowing').textContent = Math.floor(Math.random() * 50) + 5;
+    const profilePosts = document.getElementById('profilePosts');
+    if (profilePosts) profilePosts.textContent = userPosts.length;
+
+    const profileFollowers = document.getElementById('profileFollowers');
+    const profileFollowing = document.getElementById('profileFollowing');
+    if (profileFollowers) profileFollowers.textContent = Math.floor(Math.random() * 100) + 10;
+    if (profileFollowing) profileFollowing.textContent = Math.floor(Math.random() * 50) + 5;
 
     const grid = document.getElementById('profilePostsGrid');
     if (!grid) return;
@@ -657,8 +682,10 @@ const Nexus = {
   },
 
   renderWallpapers() {
-    document.getElementById('wpCount').textContent = (UNSPLASH ? UNSPLASH.length : 0) + '+ wallpapers';
+    const wpCount = document.getElementById('wpCount');
     const grid = document.getElementById('wpGrid');
+    
+    if (wpCount) wpCount.textContent = (UNSPLASH ? UNSPLASH.length : 0) + '+ wallpapers';
     if (!grid) return;
     
     if (!UNSPLASH || !UNSPLASH.length) {

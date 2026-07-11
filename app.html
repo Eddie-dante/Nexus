@@ -108,14 +108,14 @@
         </div>
     </div>
 
-    <!-- Social -->
+    <!-- Social Feed -->
     <div class="page" id="page-social">
         <div class="container" style="padding: 16px 14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <h2 style="font-size:20px;font-weight:700;">Nexus</h2>
                 <div style="display:flex;gap:12px;align-items:center;">
-                    <button class="btn-sm" id="btnWalls" style="font-size:16px;background:none;border:none;padding:4px;">🎨</button>
-                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;">➕</button>
+                    <button class="btn-sm" id="btnWalls" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="Wallpapers">🎨</button>
+                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="New Post">➕</button>
                 </div>
             </div>
             <div class="ig-story-row" id="storyRow"></div>
@@ -164,14 +164,14 @@
     <!-- Wallpapers -->
     <div class="page" id="page-wallpapers">
         <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Walls</h2>
-            <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random</button>
-            <p style="font-size:10px;color:#94a3b8;" id="wpCount">50+ wallpapers</p>
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Wallpapers</h2>
+            <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random Wallpaper</button>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">0+ wallpapers</p>
             <div class="wp-grid" id="wpGrid"></div>
         </div>
     </div>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Navigation -->
     <nav class="bottom-nav" id="bottomNav">
         <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
         <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
