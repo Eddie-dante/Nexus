@@ -1,56 +1,50 @@
-// server.js - Complete Backend API for Render
+// server.js - Complete Real-time Server with WebSocket + PostgreSQL
+require('dotenv').config();
 const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
 const cors = require('cors');
 const { Pool } = require('pg');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Database connection
+// ==================== DATABASE ====================
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// Test database connection
-pool.connect((err, client, release) => {
-  if (err) {
-    console.error('❌ Database connection error:', err.stack);
-  } else {
-    console.log('✅ Connected to PostgreSQL database');
-    release();
-  }
-});
-
-// ==================== USERS ====================
-
-// Create tables if they don't exist
+// Create tables
 async function initDatabase() {
   try {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE,
         password TEXT NOT NULL,
-        created_at TIMESTAMP DEFAULT NOW()
+        avatar TEXT DEFAULT '😊',
+        bio TEXT DEFAULT 'Building my energy. One aura at a time. ⚡',
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS profiles (
-        id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-        username TEXT UNIQUE NOT NULL,
-        bio TEXT DEFAULT 'Building my energy. One aura at a time. ⚡',
-        wallpaper TEXT DEFAULT 'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
-        selected_auras TEXT[] DEFAULT '{}',
-        updated_at TIMESTAMP DEFAULT NOW()
+      CREATE TABLE IF NOT EXISTS posts (
+        id TEXT PRIMARY KEY,
+        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        author TEXT NOT NULL,
+        avatar TEXT,
+        text TEXT NOT NULL,
+        image TEXT,
+        likes TEXT[] DEFAULT '{}',
+        created_at TIMESTAMP DEFAULT NOW()
       );
     `);
 
@@ -60,6 +54,8 @@ async function initDatabase() {
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
         username TEXT NOT NULL,
         content TEXT NOT NULL,
+        target_user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        is_private BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT NOW()
       );
     `);
@@ -85,19 +81,6 @@ async function initDatabase() {
     `);
 
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS posts (
-        id TEXT PRIMARY KEY,
-        user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
-        author TEXT NOT NULL,
-        avatar TEXT,
-        text TEXT NOT NULL,
-        image TEXT,
-        likes TEXT[] DEFAULT '{}',
-        created_at TIMESTAMP DEFAULT NOW()
-      );
-    `);
-
-    await pool.query(`
       CREATE TABLE IF NOT EXISTS task_completions (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -116,6 +99,16 @@ async function initDatabase() {
       );
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS followers (
+        id SERIAL PRIMARY KEY,
+        follower_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        following_id TEXT REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(follower_id, following_id)
+      );
+    `);
+
     console.log('✅ All tables created/verified');
   } catch (error) {
     console.error('❌ Database init error:', error);
@@ -124,7 +117,32 @@ async function initDatabase() {
 
 initDatabase();
 
-// ==================== USERS ====================
+// ==================== MIDDLEWARE ====================
+app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+// ==================== AUTH ====================
+function generateToken(userId) {
+  return jwt.sign({ userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
+}
+
+function verifyToken(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_SECRET);
+  } catch {
+    return null;
+  }
+}
+
+// ==================== REST API ====================
+
+// Health check
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// ===== Auth Routes =====
 
 // Signup
 app.post('/api/signup', async (req, res) => {
@@ -145,21 +163,15 @@ app.post('/api/signup', async (req, res) => {
     }
 
     const id = 'user_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
     await pool.query(
       'INSERT INTO users (id, username, password) VALUES ($1, $2, $3)',
       [id, username, hashedPassword]
     );
 
-    // Create profile
-    await pool.query(
-      'INSERT INTO profiles (id, username) VALUES ($1, $2)',
-      [id, username]
-    );
-
-    res.json({ success: true, user: { id, username } });
+    const token = generateToken(id);
+    res.json({ success: true, token, user: { id, username } });
   } catch (error) {
     console.error('Signup error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -175,19 +187,38 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
-    const result = await pool.query(
-      'SELECT id, username FROM users WHERE username = $1 AND password = $2',
-      [username, hashedPassword]
-    );
-
+    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    res.json({ success: true, user: result.rows[0] });
+    const user = result.rows[0];
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) {
+      return res.status(401).json({ error: 'Invalid username or password' });
+    }
+
+    const token = generateToken(user.id);
+    res.json({ 
+      success: true, 
+      token, 
+      user: { id: user.id, username: user.username, avatar: user.avatar, bio: user.bio } 
+    });
   } catch (error) {
     console.error('Login error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ===== Users =====
+
+// Get all users
+app.get('/api/users', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, username, avatar, bio FROM users ORDER BY username');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get users error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -195,7 +226,7 @@ app.post('/api/login', async (req, res) => {
 // Get user by id
 app.get('/api/users/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username FROM users WHERE id = $1', [req.params.id]);
+    const result = await pool.query('SELECT id, username, avatar, bio FROM users WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -206,183 +237,24 @@ app.get('/api/users/:id', async (req, res) => {
   }
 });
 
-// ==================== PROFILES ====================
-
-// Get profile
-app.get('/api/profiles/:userId', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM profiles WHERE id = $1', [req.params.userId]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Profile not found' });
-    }
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Get profile error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
 // Update profile
-app.put('/api/profiles/:userId', async (req, res) => {
-  const { bio, wallpaper, selected_auras } = req.body;
+app.put('/api/users/:id', async (req, res) => {
+  const { bio, avatar } = req.body;
   try {
     await pool.query(
-      'UPDATE profiles SET bio = COALESCE($1, bio), wallpaper = COALESCE($2, wallpaper), selected_auras = COALESCE($3, selected_auras), updated_at = NOW() WHERE id = $4',
-      [bio, wallpaper, selected_auras, req.params.userId]
+      'UPDATE users SET bio = COALESCE($1, bio), avatar = COALESCE($2, avatar), updated_at = NOW() WHERE id = $3',
+      [bio, avatar, req.params.id]
     );
     res.json({ success: true });
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error('Update user error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// ==================== CHAT ====================
+// ===== Posts =====
 
-// Get chat messages
-app.get('/api/chat', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM chat_messages ORDER BY created_at ASC LIMIT 100'
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Get chat error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Send chat message
-app.post('/api/chat', async (req, res) => {
-  const { user_id, username, content } = req.body;
-  if (!content) {
-    return res.status(400).json({ error: 'Content required' });
-  }
-
-  try {
-    const id = 'msg_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
-    await pool.query(
-      'INSERT INTO chat_messages (id, user_id, username, content) VALUES ($1, $2, $3, $4)',
-      [id, user_id, username, content]
-    );
-    const result = await pool.query('SELECT * FROM chat_messages WHERE id = $1', [id]);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Send chat error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete chat message
-app.delete('/api/chat/:id', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM chat_messages WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete chat error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ==================== DIARY ====================
-
-// Get diary entries
-app.get('/api/diary/:userId', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM diary_entries WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.params.userId]
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Get diary error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Add diary entry
-app.post('/api/diary', async (req, res) => {
-  const { user_id, content, mood } = req.body;
-  if (!content) {
-    return res.status(400).json({ error: 'Content required' });
-  }
-
-  try {
-    const id = 'diary_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
-    await pool.query(
-      'INSERT INTO diary_entries (id, user_id, content, mood) VALUES ($1, $2, $3, $4)',
-      [id, user_id, content, mood || null]
-    );
-    const result = await pool.query('SELECT * FROM diary_entries WHERE id = $1', [id]);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Add diary error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete diary entry
-app.delete('/api/diary/:id', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM diary_entries WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete diary error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ==================== ROUTINES ====================
-
-// Get routines
-app.get('/api/routines/:userId', async (req, res) => {
-  try {
-    const result = await pool.query(
-      'SELECT * FROM routines WHERE user_id = $1 ORDER BY created_at DESC',
-      [req.params.userId]
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Get routines error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Add routine
-app.post('/api/routines', async (req, res) => {
-  const { user_id, title, content } = req.body;
-  if (!title || !content) {
-    return res.status(400).json({ error: 'Title and content required' });
-  }
-
-  try {
-    const id = 'routine_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
-    await pool.query(
-      'INSERT INTO routines (id, user_id, title, content) VALUES ($1, $2, $3, $4)',
-      [id, user_id, title, content]
-    );
-    const result = await pool.query('SELECT * FROM routines WHERE id = $1', [id]);
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Add routine error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete routine
-app.delete('/api/routines/:id', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM routines WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Delete routine error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// ==================== POSTS ====================
-
-// Get posts
+// Get posts (feed)
 app.get('/api/posts', async (req, res) => {
   try {
     const result = await pool.query(
@@ -395,7 +267,7 @@ app.get('/api/posts', async (req, res) => {
   }
 });
 
-// Add post
+// Create post
 app.post('/api/posts', async (req, res) => {
   const { user_id, author, avatar, text, image } = req.body;
   if (!text) {
@@ -411,7 +283,7 @@ app.post('/api/posts', async (req, res) => {
     const result = await pool.query('SELECT * FROM posts WHERE id = $1', [id]);
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Add post error:', error);
+    console.error('Create post error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -427,11 +299,10 @@ app.delete('/api/posts/:id', async (req, res) => {
   }
 });
 
-// Like/unlike post
+// Like post
 app.post('/api/posts/:id/like', async (req, res) => {
   const { user_id } = req.body;
   try {
-    // Get current likes
     const result = await pool.query('SELECT likes FROM posts WHERE id = $1', [req.params.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
@@ -453,9 +324,116 @@ app.post('/api/posts/:id/like', async (req, res) => {
   }
 });
 
-// ==================== TASKS ====================
+// ===== Chat Messages =====
 
-// Get tasks for today
+// Get chat messages
+app.get('/api/messages/:userId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT * FROM chat_messages 
+       WHERE user_id = $1 OR target_user_id = $1 
+       ORDER BY created_at ASC LIMIT 100`,
+      [req.params.userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get messages error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ===== Diary =====
+
+app.get('/api/diary/:userId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM diary_entries WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.params.userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get diary error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/diary', async (req, res) => {
+  const { user_id, content, mood } = req.body;
+  if (!content) {
+    return res.status(400).json({ error: 'Content required' });
+  }
+
+  try {
+    const id = 'diary_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
+    await pool.query(
+      'INSERT INTO diary_entries (id, user_id, content, mood) VALUES ($1, $2, $3, $4)',
+      [id, user_id, content, mood || null]
+    );
+    const result = await pool.query('SELECT * FROM diary_entries WHERE id = $1', [id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Add diary error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/diary/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM diary_entries WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete diary error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ===== Routines =====
+
+app.get('/api/routines/:userId', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM routines WHERE user_id = $1 ORDER BY created_at DESC',
+      [req.params.userId]
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Get routines error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/api/routines', async (req, res) => {
+  const { user_id, title, content } = req.body;
+  if (!title || !content) {
+    return res.status(400).json({ error: 'Title and content required' });
+  }
+
+  try {
+    const id = 'routine_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
+    await pool.query(
+      'INSERT INTO routines (id, user_id, title, content) VALUES ($1, $2, $3, $4)',
+      [id, user_id, title, content]
+    );
+    const result = await pool.query('SELECT * FROM routines WHERE id = $1', [id]);
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Add routine error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.delete('/api/routines/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM routines WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete routine error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ===== Tasks =====
+
 app.get('/api/tasks/:userId', async (req, res) => {
   try {
     const result = await pool.query(
@@ -469,11 +447,9 @@ app.get('/api/tasks/:userId', async (req, res) => {
   }
 });
 
-// Toggle task
 app.post('/api/tasks/:userId/toggle', async (req, res) => {
   const { task_index } = req.body;
   try {
-    // Check if exists
     const existing = await pool.query(
       'SELECT * FROM task_completions WHERE user_id = $1 AND task_index = $2 AND completed_date = CURRENT_DATE',
       [req.params.userId, task_index]
@@ -498,9 +474,8 @@ app.post('/api/tasks/:userId/toggle', async (req, res) => {
   }
 });
 
-// ==================== STREAKS ====================
+// ===== Streaks =====
 
-// Get streaks
 app.get('/api/streaks/:userId', async (req, res) => {
   try {
     const result = await pool.query(
@@ -518,7 +493,6 @@ app.get('/api/streaks/:userId', async (req, res) => {
   }
 });
 
-// Mark streak
 app.post('/api/streaks/:userId', async (req, res) => {
   try {
     await pool.query(
@@ -532,15 +506,136 @@ app.post('/api/streaks/:userId', async (req, res) => {
   }
 });
 
-// ==================== HEALTH CHECK ====================
+// ==================== WEBSOCKET SERVER ====================
 
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+const clients = new Map(); // userId -> { ws, username, userData }
+
+wss.on('connection', (ws) => {
+  console.log('🔌 New WebSocket connection');
+  let userId = null;
+
+  ws.on('message', async (data) => {
+    try {
+      const message = JSON.parse(data);
+      
+      switch (message.type) {
+        case 'auth':
+          userId = message.userId;
+          const userResult = await pool.query('SELECT id, username, avatar FROM users WHERE id = $1', [userId]);
+          if (userResult.rows.length === 0) {
+            ws.send(JSON.stringify({ type: 'error', data: 'User not found' }));
+            return;
+          }
+          
+          const user = userResult.rows[0];
+          clients.set(userId, { ws, username: user.username, userData: user });
+          
+          // Send online users list
+          const onlineUsers = Array.from(clients.values()).map(c => ({
+            id: c.userData.id,
+            username: c.userData.username,
+            avatar: c.userData.avatar
+          }));
+          
+          ws.send(JSON.stringify({ type: 'users', data: onlineUsers }));
+          
+          // Broadcast new user joined
+          broadcast({
+            type: 'user_joined',
+            data: { id: user.id, username: user.username, avatar: user.avatar }
+          }, userId);
+          
+          console.log(`✅ ${user.username} connected`);
+          break;
+
+        case 'message':
+          if (!userId) return;
+          const sender = clients.get(userId);
+          if (!sender) return;
+          
+          const msgData = {
+            id: 'msg_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex'),
+            user_id: userId,
+            username: sender.username,
+            content: message.content,
+            target_user_id: message.targetUserId || null,
+            is_private: !!message.targetUserId,
+            created_at: new Date().toISOString()
+          };
+          
+          // Save to database
+          await pool.query(
+            `INSERT INTO chat_messages (id, user_id, username, content, target_user_id, is_private) 
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [msgData.id, msgData.user_id, msgData.username, msgData.content, msgData.target_user_id, msgData.is_private]
+          );
+          
+          if (message.targetUserId) {
+            // Private message
+            const targetClient = clients.get(message.targetUserId);
+            if (targetClient) {
+              targetClient.ws.send(JSON.stringify({
+                type: 'private_message',
+                data: msgData
+              }));
+            }
+            // Also send back to sender
+            sender.ws.send(JSON.stringify({
+              type: 'private_message',
+              data: msgData
+            }));
+          } else {
+            // Public message - broadcast to all
+            broadcast({
+              type: 'message',
+              data: msgData
+            });
+          }
+          break;
+
+        case 'typing':
+          broadcast({
+            type: 'typing',
+            data: { userId, username: clients.get(userId)?.username, isTyping: message.isTyping }
+          }, userId);
+          break;
+
+        case 'ping':
+          ws.send(JSON.stringify({ type: 'pong' }));
+          break;
+      }
+    } catch (error) {
+      console.error('WebSocket message error:', error);
+    }
+  });
+
+  ws.on('close', () => {
+    if (userId && clients.has(userId)) {
+      const user = clients.get(userId);
+      clients.delete(userId);
+      console.log(`🔴 ${user.username} disconnected`);
+      
+      broadcast({
+        type: 'user_left',
+        data: { id: userId, username: user.username }
+      });
+    }
+  });
 });
+
+function broadcast(data, excludeUserId = null) {
+  const message = JSON.stringify(data);
+  clients.forEach((client, id) => {
+    if (id !== excludeUserId && client.ws.readyState === WebSocket.OPEN) {
+      client.ws.send(message);
+    }
+  });
+}
 
 // ==================== START SERVER ====================
 
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
   console.log(`✅ Server running on port ${PORT}`);
-  console.log(`📊 Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not connected'}`);
+  console.log(`🔌 WebSocket server ready`);
 });

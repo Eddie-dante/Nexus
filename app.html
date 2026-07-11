@@ -3,202 +3,793 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Nexus · id³</title>
+    <title>Nexus · Realtime</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div class="signature">id³</div>
     <div id="toastContainer"></div>
 
-    <!-- Aura Selection -->
-    <div class="page" id="page-select">
-        <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:3px;">Choose Your Auras</h2>
-            <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Select up to 3 energies</p>
-            <div class="counter-chip"><span>✧</span> <strong id="counter">0</strong><span>/3</span></div>
-            <div class="aura-grid" id="auraGrid"></div>
-            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;">Continue →</button>
+    <!-- Login Screen -->
+    <div class="page active" id="page-login">
+        <div class="container" style="text-align:center;">
+            <span style="font-size:48px;display:block;margin-bottom:8px;">⚡</span>
+            <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;">Nexus</h2>
+            <p style="color:#64748b;font-size:13px;margin-bottom:24px;">Real-time social connection</p>
+            
+            <input type="text" id="loginUsername" placeholder="Username" style="margin-bottom:10px;">
+            <input type="password" id="loginPassword" placeholder="Password" style="margin-bottom:16px;">
+            <button class="btn-primary" id="btnLogin">Sign In ⚡</button>
+            <p id="loginError" style="color:#ef4444;font-size:11px;margin-top:8px;display:none;"></p>
+            
+            <p style="margin-top:16px;font-size:12px;color:#94a3b8;">
+                Don't have an account? <a href="#" id="showSignup" style="color:#0f172a;font-weight:600;">Create one</a>
+            </p>
         </div>
     </div>
 
-    <!-- Dashboard -->
-    <div class="page" id="page-dashboard">
-        <div class="container">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
-                <h2 id="homeTitle" style="font-size:17px;font-weight:700;">Dashboard</h2>
-                <span id="homeBadge" style="font-size:10px;background:rgba(0,0,0,0.04);padding:3px 10px;border-radius:18px;">⚡</span>
-            </div>
-            <div class="score-ring-wrap">
-                <div class="score-ring">
-                    <svg viewBox="0 0 100 100">
-                        <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="5"/>
-                        <circle id="scoreRing" cx="50" cy="50" r="43" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round" stroke-dasharray="270.18" stroke-dashoffset="270.18"/>
-                    </svg>
-                    <div class="center"><div class="num" id="score">0%</div><div class="label">Strength</div></div>
-                </div>
-            </div>
-            <div class="stat-row">
-                <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="streakCount">0</div><div class="stat-label">Streak</div></div>
-                <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="tasksDone">0</div><div class="stat-label">Tasks</div></div>
-                <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-value" id="diaryCount">0</div><div class="stat-label">Diary</div></div>
-                <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-value" id="msgCount">0</div><div class="stat-label">Chats</div></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#475569;margin-bottom:6px;">
-                <span>Today</span><span id="taskProgress" style="color:#94a3b8;">0/0</span>
-            </div>
-            <div id="tasks"></div>
-            <div class="calendar-wrap">
-                <div class="cal-header"><strong>📅 Calendar</strong><span id="monthLabel" style="font-size:11px;color:#94a3b8;">—</span></div>
-                <div class="cal-grid" id="calendar"></div>
-            </div>
-            <div style="display:flex;gap:6px;margin-top:8px;">
-                <button class="btn-sm" id="btnResetDay">↺ Reset</button>
-                <button class="btn-sm" id="btnAuras">✧ Auras</button>
-            </div>
+    <!-- Signup Screen -->
+    <div class="page" id="page-signup">
+        <div class="container" style="text-align:center;">
+            <span style="font-size:48px;display:block;margin-bottom:8px;">⚡</span>
+            <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;">Create Account</h2>
+            <p style="color:#64748b;font-size:13px;margin-bottom:24px;">Join the Nexus</p>
+            
+            <input type="text" id="signupUsername" placeholder="Username" style="margin-bottom:10px;">
+            <input type="password" id="signupPassword" placeholder="Password (min 4 chars)" style="margin-bottom:16px;">
+            <button class="btn-primary" id="btnSignup">Create Account ⚡</button>
+            <p id="signupError" style="color:#ef4444;font-size:11px;margin-top:8px;display:none;"></p>
+            
+            <p style="margin-top:16px;font-size:12px;color:#94a3b8;">
+                Already have an account? <a href="#" id="showLogin" style="color:#0f172a;font-weight:600;">Sign In</a>
+            </p>
         </div>
     </div>
 
-    <!-- Diary -->
-    <div class="page" id="page-diary">
-        <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📖 Diary</h2>
-            <textarea id="diaryInput" rows="3" placeholder="Dear diary..."></textarea>
-            <div style="display:flex;gap:6px;margin-top:6px;">
-                <input type="text" id="diaryMood" placeholder="Mood" style="flex:1;">
-                <button class="btn-sm btn-primary" id="btnSaveDiary" style="width:auto;">💾</button>
-            </div>
-            <input type="search" id="diarySearch" placeholder="🔍 Search..." oninput="Nexus.renderDiary()" style="margin-top:8px;">
-            <div id="diaryEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
-                <p style="color:#94a3b8;text-align:center;">Loading...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Routines -->
-    <div class="page" id="page-routine">
-        <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📋 Routines</h2>
-            <input type="text" id="routineTitle" placeholder="Title...">
-            <textarea id="routineInput" rows="2" placeholder="Description..." style="margin-top:6px;"></textarea>
-            <button class="btn-sm btn-primary" id="btnSaveRoutine" style="margin-top:6px;width:100%;">💾 Save</button>
-            <div id="routineEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
-                <p style="color:#94a3b8;text-align:center;">Loading...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- Chat -->
-    <div class="page" id="page-chat">
-        <div class="container">
+    <!-- Main App -->
+    <div class="page" id="page-app">
+        <div class="container" style="padding: 12px 14px;">
+            <!-- Header -->
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-                <h2 style="font-size:19px;font-weight:700;">💬 Chat</h2>
-                <span style="font-size:11px;color:#4ade80;">● <span id="onlineCount">0</span></span>
+                <h2 style="font-size:18px;font-weight:700;">💬 Nexus</h2>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:11px;color:#4ade80;">🟢 <span id="onlineCount">0</span> online</span>
+                    <button class="btn-sm" id="btnLogout" style="font-size:10px;">🚪</button>
+                </div>
             </div>
-            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
-                You: <strong id="myUsername">—</strong>
-                <button class="btn-sm" id="btnChangeUsername" style="margin-left:6px;font-size:10px;">✏️</button>
-            </div>
+
             <!-- User List -->
-            <div id="userList" style="margin-bottom:8px;max-height:80px;overflow-y:auto;background:rgba(0,0,0,0.03);border-radius:10px;padding:6px;">
-                <div style="font-size:10px;color:#94a3b8;padding:2px 6px;">👥 Friends Online</div>
-                <div id="usersListContainer" style="display:flex;flex-wrap:wrap;gap:4px;padding:4px;">
-                    <span style="font-size:11px;color:#94a3b8;">Loading users...</span>
+            <div id="userList" style="margin-bottom:6px;max-height:70px;overflow-y:auto;background:rgba(0,0,0,0.03);border-radius:10px;padding:4px 6px;">
+                <div style="font-size:9px;color:#94a3b8;padding:2px 4px;">👥 Online Users</div>
+                <div id="usersListContainer" style="display:flex;flex-wrap:wrap;gap:3px;padding:2px;">
+                    <span style="font-size:10px;color:#94a3b8;">Connecting...</span>
                 </div>
             </div>
-            <div class="chat-messages" id="chatMessages">
-                <p style="color:#94a3b8;text-align:center;padding:16px;">💬 No messages yet. Start the conversation!</p>
-            </div>
-            <div style="display:flex;gap:6px;">
-                <input type="text" id="chatInput" placeholder="Message..." style="flex:1;">
-                <button class="btn-sm btn-primary" id="btnSendMessage" style="width:auto;">📤</button>
-            </div>
-        </div>
-    </div>
 
-    <!-- Social Feed -->
-    <div class="page" id="page-social">
-        <div class="container" style="padding: 16px 14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-                <h2 style="font-size:20px;font-weight:700;">Nexus</h2>
-                <div style="display:flex;gap:12px;align-items:center;">
-                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="New Post">➕</button>
-                </div>
+            <!-- Chat Messages -->
+            <div class="chat-messages" id="chatMessages" style="height:300px;max-height:300px;">
+                <p style="color:#94a3b8;text-align:center;padding:16px;">💬 Connecting to server...</p>
             </div>
-            <div class="ig-story-row" id="storyRow"></div>
-            <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:10px 12px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.04);">
-                <div style="display:flex;align-items:center;gap:10px;">
-                    <div class="ig-post-avatar" style="width:32px;height:32px;font-size:16px;flex-shrink:0;">
-                        <span id="postAvatarEmoji">😊</span>
+
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" style="font-size:10px;color:#94a3b8;min-height:18px;padding:2px 0;"></div>
+
+            <!-- Input Area -->
+            <div style="display:flex;gap:4px;margin-top:2px;">
+                <input type="text" id="chatInput" placeholder="Type a message..." style="flex:1;padding:8px 12px;font-size:13px;">
+                <button class="btn-sm btn-primary" id="btnSendMessage" style="padding:8px 14px;">📤</button>
+            </div>
+
+            <!-- Navigation -->
+            <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
+                <button class="btn-sm" data-page="social" style="flex:1;">🏠 Feed</button>
+                <button class="btn-sm" data-page="dashboard" style="flex:1;">📊 Dashboard</button>
+                <button class="btn-sm" data-page="diary" style="flex:1;">📖 Diary</button>
+                <button class="btn-sm" data-page="profile" style="flex:1;">👤 Profile</button>
+            </div>
+
+            <!-- Social Feed -->
+            <div id="page-social" style="display:none;margin-top:10px;">
+                <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:10px;margin-bottom:10px;">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span id="postAvatarEmoji" style="font-size:24px;">😊</span>
+                        <input type="text" id="postInput" placeholder="What's on your mind?" style="flex:1;border:none;background:transparent;padding:6px 0;font-size:13px;outline:none;">
+                        <button class="btn-sm btn-primary" id="btnCreatePost" style="padding:4px 12px;font-size:11px;">Post</button>
                     </div>
-                    <input type="text" id="postInput" placeholder="What's on your mind?" style="flex:1;border:none;background:transparent;padding:6px 0;font-size:13px;outline:none;">
-                    <button class="btn-sm btn-primary" id="btnCreatePost" style="width:auto;padding:6px 14px;font-size:12px;">Post</button>
+                </div>
+                <div id="socialFeed" style="max-height:300px;overflow-y:auto;">
+                    <p style="color:#94a3b8;text-align:center;padding:20px;">No posts yet</p>
                 </div>
             </div>
-            <div id="socialFeed" style="max-height:520px;overflow-y:auto;padding-bottom:10px;">
-                <p style="color:#94a3b8;text-align:center;padding:30px 0;">Loading...</p>
-            </div>
-        </div>
-    </div>
 
-    <!-- Profile -->
-    <div class="page" id="page-profile">
-        <div class="container">
-            <div class="profile-header">
-                <div class="profile-avatar-large"><div class="inner" id="profileAvatarEmoji">😊</div></div>
-                <div class="profile-name" id="profileName">—</div>
-                <div class="profile-username" id="profileUsername">@—</div>
-                <div class="profile-stats">
-                    <div class="profile-stat"><div class="num" id="profilePosts">0</div><div class="label">Posts</div></div>
-                    <div class="profile-stat"><div class="num" id="profileFollowers">0</div><div class="label">Followers</div></div>
-                    <div class="profile-stat"><div class="num" id="profileFollowing">0</div><div class="label">Following</div></div>
+            <!-- Dashboard -->
+            <div id="page-dashboard" style="display:none;margin-top:10px;">
+                <div id="dashboardContent">
+                    <p style="color:#94a3b8;text-align:center;padding:20px;">Dashboard loading...</p>
                 </div>
-                <div class="profile-bio" id="profileBio">Building my energy. One aura at a time. ⚡</div>
-                <button class="profile-edit-btn" id="btnEditProfile">✏️ Edit Profile</button>
-                <button class="profile-edit-btn" id="btnLogout" style="margin-top:6px;color:#ef4444;border-color:#ef4444;">🚪 Logout</button>
             </div>
-            <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileDashboard">📊 Dashboard</button>
-                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileAuras">✧ Auras</button>
+
+            <!-- Diary -->
+            <div id="page-diary" style="display:none;margin-top:10px;">
+                <textarea id="diaryInput" rows="2" placeholder="Dear diary..." style="width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-size:12px;"></textarea>
+                <div style="display:flex;gap:4px;margin-top:4px;">
+                    <input type="text" id="diaryMood" placeholder="Mood" style="flex:1;padding:6px 8px;border-radius:8px;border:1px solid rgba(0,0,0,0.1);font-size:12px;">
+                    <button class="btn-sm btn-primary" id="btnSaveDiary" style="padding:4px 12px;">💾</button>
+                </div>
+                <div id="diaryEntries" style="margin-top:6px;max-height:200px;overflow-y:auto;">
+                    <p style="color:#94a3b8;text-align:center;padding:10px;">No entries yet</p>
+                </div>
             </div>
-            <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;">📸 Your Posts</h3>
-            <div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
-                <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:16px 0;">No posts yet.</p>
+
+            <!-- Profile -->
+            <div id="page-profile" style="display:none;margin-top:10px;text-align:center;">
+                <div style="font-size:48px;margin:8px 0;" id="profileAvatar">😊</div>
+                <div style="font-weight:700;font-size:18px;" id="profileName">—</div>
+                <div style="color:#64748b;font-size:13px;" id="profileUsername">@—</div>
+                <div style="margin:8px 0;" id="profileBio">Building my energy. One aura at a time. ⚡</div>
+                <button class="btn-sm" id="btnEditProfile" style="margin:4px;">✏️ Edit Bio</button>
+                <div style="display:flex;gap:12px;justify-content:center;margin:8px 0;">
+                    <div><strong id="profilePosts">0</strong> <span style="font-size:11px;color:#94a3b8;">Posts</span></div>
+                    <div><strong id="profileFollowers">0</strong> <span style="font-size:11px;color:#94a3b8;">Followers</span></div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Wallpapers -->
-    <div class="page" id="page-wallpapers">
-        <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Wallpapers</h2>
-            <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random Wallpaper</button>
-            <p style="font-size:10px;color:#94a3b8;" id="wpCount">0 wallpapers</p>
-            <div class="wp-grid" id="wpGrid"></div>
-        </div>
-    </div>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav" id="bottomNav">
-        <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-        <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
-        <button class="nav-btn" data-page="diary"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
-        <button class="nav-btn" data-page="routine"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
-        <button class="nav-btn" data-page="chat"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
-        <button class="nav-btn" data-page="wallpapers"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
-        <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
-    </nav>
-
-    <!-- Scripts -->
     <script>
-        // Set your Render API URL - CHANGE THIS TO YOUR RENDER URL
-        const API_BASE_URL = 'https://nexus-api.onrender.com/api';
-        // For local development, use: http://localhost:3000/api
-        // const API_BASE_URL = 'http://localhost:3000/api';
+        // ==================== CONFIGURATION ====================
+        const API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000/api' 
+            : 'https://nexus-realtime.onrender.com/api';
+        const WS_URL = window.location.hostname === 'localhost' 
+            ? 'ws://localhost:3000' 
+            : 'wss://nexus-realtime.onrender.com';
+
+        // ==================== STATE ====================
+        let ws = null;
+        let currentUser = null;
+        let token = null;
+        let isConnected = false;
+        let onlineUsers = new Map();
+        let posts = [];
+        let diaryEntries = [];
+        let dashboardData = {};
+
+        // ==================== DOM ====================
+        const loginPage = document.getElementById('page-login');
+        const signupPage = document.getElementById('page-signup');
+        const appPage = document.getElementById('page-app');
+        const loginUsername = document.getElementById('loginUsername');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginError = document.getElementById('loginError');
+        const signupUsername = document.getElementById('signupUsername');
+        const signupPassword = document.getElementById('signupPassword');
+        const signupError = document.getElementById('signupError');
+        const btnLogin = document.getElementById('btnLogin');
+        const btnSignup = document.getElementById('btnSignup');
+        const btnLogout = document.getElementById('btnLogout');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const btnSend = document.getElementById('btnSendMessage');
+        const onlineCount = document.getElementById('onlineCount');
+        const usersList = document.getElementById('usersListContainer');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const socialFeed = document.getElementById('socialFeed');
+        const postInput = document.getElementById('postInput');
+        const btnCreatePost = document.getElementById('btnCreatePost');
+
+        // ==================== HELPERS ====================
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function toast(msg, duration = 2000) {
+            const t = document.createElement('div');
+            t.className = 'toast';
+            t.textContent = msg;
+            const container = document.getElementById('toastContainer');
+            if (container) {
+                container.appendChild(t);
+                setTimeout(() => t.remove(), duration);
+            }
+        }
+
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function scrollToBottom() {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ==================== API HELPERS ====================
+        async function apiCall(endpoint, options = {}) {
+            const response = await fetch(`${API_URL}${endpoint}`, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                    ...(options.headers || {})
+                }
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Request failed');
+            }
+            return data;
+        }
+
+        // ==================== AUTH ====================
+        async function login() {
+            const username = loginUsername.value.trim();
+            const password = loginPassword.value;
+
+            if (!username || !password) {
+                loginError.textContent = 'All fields required';
+                loginError.style.display = 'block';
+                return;
+            }
+
+            loginError.style.display = 'none';
+
+            try {
+                const data = await apiCall('/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+
+                token = data.token;
+                currentUser = data.user;
+                localStorage.setItem('nexus_token', token);
+                localStorage.setItem('nexus_user', JSON.stringify(currentUser));
+
+                showApp();
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.style.display = 'block';
+            }
+        }
+
+        async function signup() {
+            const username = signupUsername.value.trim();
+            const password = signupPassword.value;
+
+            if (!username || !password) {
+                signupError.textContent = 'All fields required';
+                signupError.style.display = 'block';
+                return;
+            }
+            if (password.length < 4) {
+                signupError.textContent = 'Password must be at least 4 characters';
+                signupError.style.display = 'block';
+                return;
+            }
+
+            signupError.style.display = 'none';
+
+            try {
+                const data = await apiCall('/signup', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+
+                token = data.token;
+                currentUser = data.user;
+                localStorage.setItem('nexus_token', token);
+                localStorage.setItem('nexus_user', JSON.stringify(currentUser));
+
+                toast('Account created! ✨');
+                showApp();
+            } catch (error) {
+                signupError.textContent = error.message;
+                signupError.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            if (ws && isConnected) {
+                ws.close();
+            }
+            localStorage.removeItem('nexus_token');
+            localStorage.removeItem('nexus_user');
+            currentUser = null;
+            token = null;
+            isConnected = false;
+            showPage('page-login');
+            toast('Logged out');
+        }
+
+        // ==================== WEBSOCKET ====================
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket(WS_URL);
+
+                ws.onopen = () => {
+                    console.log('🔌 WebSocket connected');
+                    isConnected = true;
+                    
+                    ws.send(JSON.stringify({
+                        type: 'auth',
+                        userId: currentUser.id
+                    }));
+                };
+
+                ws.onmessage = (event) => {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleWebSocketMessage(message);
+                    } catch (error) {
+                        console.error('Parse error:', error);
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.log('🔴 WebSocket disconnected');
+                    isConnected = false;
+                    // Reconnect after 3 seconds
+                    setTimeout(() => {
+                        if (currentUser) {
+                            connectWebSocket();
+                        }
+                    }, 3000);
+                };
+
+                ws.onerror = (error) => {
+                    console.error('WebSocket error:', error);
+                };
+            } catch (error) {
+                console.error('Connection error:', error);
+            }
+        }
+
+        function handleWebSocketMessage(message) {
+            switch (message.type) {
+                case 'users':
+                    onlineUsers.clear();
+                    message.data.forEach(user => {
+                        onlineUsers.set(user.id, user);
+                    });
+                    updateUserList();
+                    break;
+
+                case 'user_joined':
+                    onlineUsers.set(message.data.id, message.data);
+                    updateUserList();
+                    toast(`🟢 ${message.data.username} joined`);
+                    break;
+
+                case 'user_left':
+                    onlineUsers.delete(message.data.id);
+                    updateUserList();
+                    toast(`🔴 ${message.data.username} left`);
+                    break;
+
+                case 'message':
+                    renderMessage(message.data);
+                    scrollToBottom();
+                    break;
+
+                case 'private_message':
+                    renderMessage(message.data, true);
+                    scrollToBottom();
+                    break;
+
+                case 'typing':
+                    if (message.data.userId !== currentUser.id) {
+                        typingIndicator.textContent = message.data.isTyping ? 
+                            `${message.data.username} is typing...` : '';
+                    }
+                    break;
+
+                case 'pong':
+                    break;
+
+                default:
+                    console.log('Unknown message type:', message.type);
+            }
+        }
+
+        function renderMessage(msg, isPrivate = false) {
+            const div = document.createElement('div');
+            const me = msg.user_id === currentUser?.id;
+            
+            div.style.display = 'flex';
+            div.style.justifyContent = me ? 'flex-end' : 'flex-start';
+            div.style.margin = '2px 0';
+            
+            const time = new Date(msg.created_at).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            const privateLabel = isPrivate ? '🔒 ' : '';
+            
+            div.innerHTML = `
+                <div style="max-width:82%;">
+                    <div class="chat-bubble ${me ? 'chat-sent' : 'chat-received'}" style="${isPrivate ? 'border:1px solid #8b5cf6;' : ''}">
+                        <div style="font-size:9px;font-weight:600;opacity:0.7;">
+                            ${privateLabel}${escapeHtml(msg.username)} · ${time}
+                        </div>
+                        <p style="margin:2px 0 0;word-wrap:break-word;">${escapeHtml(msg.content)}</p>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(div);
+        }
+
+        function updateUserList() {
+            const users = Array.from(onlineUsers.values());
+            onlineCount.textContent = users.length;
+            
+            if (users.length === 0) {
+                usersList.innerHTML = '<span style="font-size:10px;color:#94a3b8;">No one online</span>';
+                return;
+            }
+            
+            usersList.innerHTML = users.map(u => {
+                const isMe = u.id === currentUser?.id;
+                return `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:10px;background:${isMe ? 'rgba(99,102,241,0.15)' : 'rgba(74,222,128,0.1)'};font-size:10px;${isMe ? 'border:1px solid #6366f1;' : ''}">
+                    ${isMe ? '⭐' : '🟢'} ${escapeHtml(u.username)}
+                    ${isMe ? ' (you)' : ''}
+                </span>`;
+            }).join('');
+        }
+
+        // ==================== SEND MESSAGE ====================
+        function sendMessage() {
+            const text = chatInput.value.trim();
+            if (!text || !ws || !isConnected) return;
+
+            ws.send(JSON.stringify({
+                type: 'message',
+                content: text
+            }));
+
+            chatInput.value = '';
+            typingIndicator.textContent = '';
+            
+            ws.send(JSON.stringify({
+                type: 'typing',
+                isTyping: false
+            }));
+        }
+
+        // ==================== SOCIAL FEED ====================
+        async function loadFeed() {
+            try {
+                const data = await apiCall('/posts');
+                posts = data;
+                renderFeed();
+            } catch (error) {
+                console.error('Feed error:', error);
+            }
+        }
+
+        function renderFeed() {
+            if (!posts.length) {
+                socialFeed.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:20px;">No posts yet</p>';
+                return;
+            }
+
+            socialFeed.innerHTML = posts.map(p => {
+                const liked = (p.likes || []).includes(currentUser.id);
+                const time = new Date(p.created_at).toLocaleDateString();
+                return `
+                    <div style="background:rgba(255,255,255,0.5);border-radius:10px;padding:10px;margin-bottom:8px;border:1px solid rgba(0,0,0,0.05);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+                            <span style="font-size:20px;">${escapeHtml(p.avatar || '😊')}</span>
+                            <span style="font-weight:600;font-size:13px;">${escapeHtml(p.author)}</span>
+                            <span style="font-size:10px;color:#94a3b8;">${time}</span>
+                            ${p.user_id === currentUser.id ? `<button onclick="deletePost('${p.id}')" style="margin-left:auto;background:none;border:none;color:#ef4444;cursor:pointer;">🗑️</button>` : ''}
+                        </div>
+                        <p style="font-size:13px;margin:4px 0;">${escapeHtml(p.text)}</p>
+                        ${p.image ? `<img src="${p.image}" style="width:100%;border-radius:8px;margin:4px 0;max-height:200px;object-fit:cover;" />` : ''}
+                        <div style="display:flex;gap:12px;margin-top:4px;">
+                            <button onclick="likePost('${p.id}')" style="background:none;border:none;cursor:pointer;font-size:14px;${liked ? 'color:#ef4444;' : ''}">
+                                ${liked ? '❤️' : '🤍'} ${(p.likes || []).length}
+                            </button>
+                            <button onclick="toast('Comment coming soon')" style="background:none;border:none;cursor:pointer;font-size:14px;">💬</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function createPost() {
+            const text = postInput.value.trim();
+            if (!text) { toast('Write something'); return; }
+
+            try {
+                const data = await apiCall('/posts', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: currentUser.id,
+                        author: currentUser.username,
+                        avatar: '😊',
+                        text: text
+                    })
+                });
+                posts.unshift(data);
+                renderFeed();
+                postInput.value = '';
+                toast('Posted! ✨');
+            } catch (error) {
+                toast('Failed to post');
+            }
+        }
+
+        async function likePost(postId) {
+            try {
+                const data = await apiCall(`/posts/${postId}/like`, {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: currentUser.id })
+                });
+                const post = posts.find(p => p.id === postId);
+                if (post) {
+                    post.likes = data.likes;
+                    renderFeed();
+                }
+            } catch (error) {
+                toast('Failed to like');
+            }
+        }
+
+        async function deletePost(postId) {
+            if (!confirm('Delete this post?')) return;
+            try {
+                await apiCall(`/posts/${postId}`, { method: 'DELETE' });
+                posts = posts.filter(p => p.id !== postId);
+                renderFeed();
+                toast('Post deleted');
+            } catch (error) {
+                toast('Failed to delete');
+            }
+        }
+
+        // ==================== DIARY ====================
+        async function loadDiary() {
+            try {
+                const data = await apiCall(`/diary/${currentUser.id}`);
+                diaryEntries = data;
+                renderDiary();
+            } catch (error) {
+                console.error('Diary error:', error);
+            }
+        }
+
+        function renderDiary() {
+            const container = document.getElementById('diaryEntries');
+            if (!diaryEntries.length) {
+                container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:10px;">No entries yet</p>';
+                return;
+            }
+            container.innerHTML = diaryEntries.map(e => `
+                <div style="background:rgba(255,255,255,0.5);border-radius:8px;padding:8px;margin-bottom:4px;border:1px solid rgba(0,0,0,0.05);">
+                    <div style="display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;">
+                        <span>${new Date(e.created_at).toLocaleDateString()}</span>
+                        <span>${escapeHtml(e.mood || '—')}</span>
+                    </div>
+                    <p style="font-size:12px;margin:2px 0;">${escapeHtml(e.content)}</p>
+                    <button onclick="deleteDiary('${e.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:10px;">🗑️</button>
+                </div>
+            `).join('');
+        }
+
+        async function saveDiary() {
+            const content = document.getElementById('diaryInput').value.trim();
+            const mood = document.getElementById('diaryMood').value.trim() || '—';
+            if (!content) { toast('Write something'); return; }
+
+            try {
+                const data = await apiCall('/diary', {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: currentUser.id, content, mood })
+                });
+                diaryEntries.unshift(data);
+                renderDiary();
+                document.getElementById('diaryInput').value = '';
+                document.getElementById('diaryMood').value = '';
+                toast('💾 Saved!');
+            } catch (error) {
+                toast('Failed to save');
+            }
+        }
+
+        async function deleteDiary(id) {
+            try {
+                await apiCall(`/diary/${id}`, { method: 'DELETE' });
+                diaryEntries = diaryEntries.filter(e => e.id !== id);
+                renderDiary();
+            } catch (error) {
+                toast('Failed to delete');
+            }
+        }
+
+        // ==================== DASHBOARD ====================
+        async function loadDashboard() {
+            try {
+                const [tasks, streaks] = await Promise.all([
+                    apiCall(`/tasks/${currentUser.id}`),
+                    apiCall(`/streaks/${currentUser.id}`)
+                ]);
+                dashboardData = { tasks, streaks };
+                renderDashboard();
+            } catch (error) {
+                console.error('Dashboard error:', error);
+            }
+        }
+
+        function renderDashboard() {
+            const container = document.getElementById('dashboardContent');
+            const taskCount = dashboardData.tasks?.length || 0;
+            const streakCount = Object.keys(dashboardData.streaks || {}).length;
+            
+            container.innerHTML = `
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                    <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:16px;text-align:center;">
+                        <div style="font-size:28px;">✅</div>
+                        <div style="font-weight:700;font-size:20px;">${taskCount}</div>
+                        <div style="font-size:10px;color:#94a3b8;">Tasks Done</div>
+                    </div>
+                    <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:16px;text-align:center;">
+                        <div style="font-size:28px;">🔥</div>
+                        <div style="font-weight:700;font-size:20px;">${streakCount}</div>
+                        <div style="font-size:10px;color:#94a3b8;">Day Streak</div>
+                    </div>
+                </div>
+                <div style="margin-top:8px;background:rgba(255,255,255,0.5);border-radius:12px;padding:12px;">
+                    <div style="font-weight:600;font-size:13px;margin-bottom:4px;">Your Auras</div>
+                    <div style="display:flex;gap:4px;font-size:24px;">
+                        ⚡ 🎯 🧘
+                    </div>
+                </div>
+            `;
+        }
+
+        // ==================== PROFILE ====================
+        async function loadProfile() {
+            try {
+                const data = await apiCall(`/users/${currentUser.id}`);
+                currentUser = { ...currentUser, ...data };
+                renderProfile();
+            } catch (error) {
+                console.error('Profile error:', error);
+            }
+        }
+
+        function renderProfile() {
+            document.getElementById('profileAvatar').textContent = currentUser.avatar || '😊';
+            document.getElementById('profileName').textContent = currentUser.username;
+            document.getElementById('profileUsername').textContent = `@${currentUser.username}`;
+            document.getElementById('profileBio').textContent = currentUser.bio || 'Building my energy. One aura at a time. ⚡';
+            document.getElementById('profilePosts').textContent = posts.filter(p => p.user_id === currentUser.id).length;
+        }
+
+        async function editProfile() {
+            const newBio = prompt('Edit your bio:', currentUser.bio || '');
+            if (newBio !== null) {
+                try {
+                    await apiCall(`/users/${currentUser.id}`, {
+                        method: 'PUT',
+                        body: JSON.stringify({ bio: newBio.trim() })
+                    });
+                    currentUser.bio = newBio.trim();
+                    renderProfile();
+                    toast('Bio updated');
+                } catch (error) {
+                    toast('Failed to update');
+                }
+            }
+        }
+
+        // ==================== NAVIGATION ====================
+        function navigateTo(page) {
+            document.querySelectorAll('#page-app > div > div > [id^="page-"]').forEach(el => {
+                el.style.display = 'none';
+            });
+            const target = document.getElementById(`page-${page}`);
+            if (target) target.style.display = 'block';
+            
+            if (page === 'social') loadFeed();
+            if (page === 'diary') loadDiary();
+            if (page === 'dashboard') loadDashboard();
+            if (page === 'profile') loadProfile();
+        }
+
+        // ==================== SHOW APP ====================
+        function showApp() {
+            showPage('page-app');
+            connectWebSocket();
+            
+            // Load initial data
+            loadFeed();
+            loadDashboard();
+            loadDiary();
+            loadProfile();
+            
+            // Show social feed by default
+            navigateTo('social');
+            
+            toast(`Welcome ${currentUser.username}! 👋`);
+        }
+
+        // ==================== EVENT LISTENERS ====================
+        btnLogin.addEventListener('click', login);
+        loginPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') login();
+        });
+
+        btnSignup.addEventListener('click', signup);
+        signupPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') signup();
+        });
+
+        document.getElementById('showSignup').addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage('page-signup');
+        });
+
+        document.getElementById('showLogin').addEventListener('click', (e) => {
+            e.preventDefault();
+            showPage('page-login');
+        });
+
+        btnSend.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        btnLogout.addEventListener('click', logout);
+        btnCreatePost.addEventListener('click', createPost);
+        document.getElementById('btnSaveDiary').addEventListener('click', saveDiary);
+        document.getElementById('btnEditProfile').addEventListener('click', editProfile);
+
+        // Typing indicator
+        let typingTimeout = null;
+        chatInput.addEventListener('input', () => {
+            if (!ws || !isConnected) return;
+            
+            const isTyping = chatInput.value.length > 0;
+            ws.send(JSON.stringify({ type: 'typing', isTyping }));
+            
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                if (ws && isConnected) {
+                    ws.send(JSON.stringify({ type: 'typing', isTyping: false }));
+                }
+            }, 1000);
+        });
+
+        // Navigation buttons
+        document.querySelectorAll('[data-page]').forEach(btn => {
+            btn.addEventListener('click', () => navigateTo(btn.dataset.page));
+        });
+
+        // ==================== AUTO-LOGIN ====================
+        const savedToken = localStorage.getItem('nexus_token');
+        const savedUser = localStorage.getItem('nexus_user');
+        if (savedToken && savedUser) {
+            token = savedToken;
+            currentUser = JSON.parse(savedUser);
+            showApp();
+        }
+
+        // ==================== KEEP ALIVE ====================
+        setInterval(() => {
+            if (ws && isConnected) {
+                ws.send(JSON.stringify({ type: 'ping' }));
+            }
+        }, 30000);
+
+        console.log('⚡ Nexus Realtime ready');
     </script>
-    <script src="js/api.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/auras.js"></script>
-    <script src="js/wallpapers.js"></script>
-    <script src="js/app.js"></script>
 </body>
 </html>
