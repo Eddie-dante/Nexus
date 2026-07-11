@@ -1,6 +1,47 @@
-<!-- Replace this in app.html -->
-<script src="js/storage.js"></script>
-<script src="js/auras.js"></script>
-<script src="js/wallpapers.js"></script>
-<script src="js/app.js"></script>
-<!-- Remove any supabase references -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Sign Up · Nexus</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="signature">id³</div>
+    <div id="toastContainer"></div>
+
+    <div class="page active">
+        <div class="container" style="text-align:center;">
+            <span style="font-size:48px;display:block;margin-bottom:8px;">⚡</span>
+            <h2 style="font-size:22px;font-weight:700;margin-bottom:4px;">Create Account</h2>
+            <p style="color:#64748b;font-size:13px;margin-bottom:24px;">Join the Nexus</p>
+
+            <input type="text" id="signupUsername" placeholder="Username" style="margin-bottom:10px;">
+            <input type="password" id="signupPassword" placeholder="Password (min 4 chars)" style="margin-bottom:6px;">
+            <div style="font-size:10px;color:#64748b;text-align:left;margin-bottom:10px;padding:0 4px;">
+                Password must be at least 4 characters
+            </div>
+            <input type="password" id="signupConfirm" placeholder="Confirm Password" style="margin-bottom:16px;">
+
+            <button class="btn-primary" id="btnSignup">Create Account</button>
+            <p id="signupError" style="color:#ef4444;font-size:11px;margin-top:8px;display:none;"></p>
+
+            <p style="margin-top:20px;font-size:13px;color:#64748b;">
+                Already have an account? <a href="login.html" style="color:#0f172a;font-weight:600;">Sign In</a>
+            </p>
+            <a href="index.html"><button class="btn-secondary">← Back</button></a>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Set your Render API URL - CHANGE THIS TO YOUR RENDER URL
+        const API_BASE_URL = 'https://nexus-api.onrender.com/api';
+        // For local development, use: http://localhost:3000/api
+        // const API_BASE_URL = 'http://localhost:3000/api';
+    </script>
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>
