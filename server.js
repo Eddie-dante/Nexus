@@ -1,9 +1,4 @@
-# Delete the corrupted file
-rm server.js
-
-# Create the correct server.js using a different method
-cat > server.js << 'EOF'
-const express = require('express');
+﻿const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
@@ -52,7 +47,7 @@ app.post('/api/signup', async (req, res) => {
   }
 
   try {
-    const existing = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const existing = await pool.query('SELECT * FROM users WHERE username = ', [username]);
     if (existing.rows.length > 0) {
       return res.status(400).json({ error: 'Username already taken' });
     }
@@ -61,7 +56,7 @@ app.post('/api/signup', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await pool.query(
-      'INSERT INTO users (id, username, password) VALUES ($1, $2, $3)',
+      'INSERT INTO users (id, username, password) VALUES (, , )',
       [id, username, hashedPassword]
     );
 
@@ -81,7 +76,7 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    const result = await pool.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await pool.query('SELECT * FROM users WHERE username = ', [username]);
     if (result.rows.length === 0) {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
@@ -116,7 +111,7 @@ app.get('/api/users', async (req, res) => {
 
 app.get('/api/users/:id', async (req, res) => {
   try {
-    const result = await pool.query('SELECT id, username, avatar, bio FROM users WHERE id = $1', [req.params.id]);
+    const result = await pool.query('SELECT id, username, avatar, bio FROM users WHERE id = ', [req.params.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -130,7 +125,7 @@ app.put('/api/users/:id', async (req, res) => {
   const { bio, avatar } = req.body;
   try {
     await pool.query(
-      'UPDATE users SET bio = COALESCE($1, bio), avatar = COALESCE($2, avatar), updated_at = NOW() WHERE id = $3',
+      'UPDATE users SET bio = COALESCE(, bio), avatar = COALESCE(, avatar), updated_at = NOW() WHERE id = ',
       [bio, avatar, req.params.id]
     );
     res.json({ success: true });
@@ -158,10 +153,10 @@ app.post('/api/posts', async (req, res) => {
   try {
     const id = 'post_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
     await pool.query(
-      'INSERT INTO posts (id, user_id, author, avatar, text, image) VALUES ($1, $2, $3, $4, $5, $6)',
+      'INSERT INTO posts (id, user_id, author, avatar, text, image) VALUES (, , , , , )',
       [id, user_id, author, avatar || '😊', text, image || null]
     );
-    const result = await pool.query('SELECT * FROM posts WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM posts WHERE id = ', [id]);
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -170,7 +165,7 @@ app.post('/api/posts', async (req, res) => {
 
 app.delete('/api/posts/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM posts WHERE id = ', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -180,7 +175,7 @@ app.delete('/api/posts/:id', async (req, res) => {
 app.post('/api/posts/:id/like', async (req, res) => {
   const { user_id } = req.body;
   try {
-    const result = await pool.query('SELECT likes FROM posts WHERE id = $1', [req.params.id]);
+    const result = await pool.query('SELECT likes FROM posts WHERE id = ', [req.params.id]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Post not found' });
     }
@@ -193,7 +188,7 @@ app.post('/api/posts/:id/like', async (req, res) => {
       likes.push(user_id);
     }
     
-    await pool.query('UPDATE posts SET likes = $1 WHERE id = $2', [likes, req.params.id]);
+    await pool.query('UPDATE posts SET likes =  WHERE id = ', [likes, req.params.id]);
     res.json({ success: true, likes });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -204,7 +199,7 @@ app.post('/api/posts/:id/like', async (req, res) => {
 app.get('/api/diary/:userId', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM diary_entries WHERE user_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM diary_entries WHERE user_id =  ORDER BY created_at DESC',
       [req.params.userId]
     );
     res.json(result.rows);
@@ -222,10 +217,10 @@ app.post('/api/diary', async (req, res) => {
   try {
     const id = 'diary_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
     await pool.query(
-      'INSERT INTO diary_entries (id, user_id, content, mood) VALUES ($1, $2, $3, $4)',
+      'INSERT INTO diary_entries (id, user_id, content, mood) VALUES (, , , )',
       [id, user_id, content, mood || null]
     );
-    const result = await pool.query('SELECT * FROM diary_entries WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM diary_entries WHERE id = ', [id]);
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -234,7 +229,7 @@ app.post('/api/diary', async (req, res) => {
 
 app.delete('/api/diary/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM diary_entries WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM diary_entries WHERE id = ', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -245,7 +240,7 @@ app.delete('/api/diary/:id', async (req, res) => {
 app.get('/api/routines/:userId', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM routines WHERE user_id = $1 ORDER BY created_at DESC',
+      'SELECT * FROM routines WHERE user_id =  ORDER BY created_at DESC',
       [req.params.userId]
     );
     res.json(result.rows);
@@ -263,10 +258,10 @@ app.post('/api/routines', async (req, res) => {
   try {
     const id = 'routine_' + Date.now() + '_' + crypto.randomBytes(4).toString('hex');
     await pool.query(
-      'INSERT INTO routines (id, user_id, title, content) VALUES ($1, $2, $3, $4)',
+      'INSERT INTO routines (id, user_id, title, content) VALUES (, , , )',
       [id, user_id, title, content]
     );
-    const result = await pool.query('SELECT * FROM routines WHERE id = $1', [id]);
+    const result = await pool.query('SELECT * FROM routines WHERE id = ', [id]);
     res.json(result.rows[0]);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -275,7 +270,7 @@ app.post('/api/routines', async (req, res) => {
 
 app.delete('/api/routines/:id', async (req, res) => {
   try {
-    await pool.query('DELETE FROM routines WHERE id = $1', [req.params.id]);
+    await pool.query('DELETE FROM routines WHERE id = ', [req.params.id]);
     res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -286,7 +281,7 @@ app.delete('/api/routines/:id', async (req, res) => {
 app.get('/api/tasks/:userId', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT task_index FROM task_completions WHERE user_id = $1 AND completed_date = CURRENT_DATE',
+      'SELECT task_index FROM task_completions WHERE user_id =  AND completed_date = CURRENT_DATE',
       [req.params.userId]
     );
     res.json(result.rows.map(r => r.task_index));
@@ -299,18 +294,18 @@ app.post('/api/tasks/:userId/toggle', async (req, res) => {
   const { task_index } = req.body;
   try {
     const existing = await pool.query(
-      'SELECT * FROM task_completions WHERE user_id = $1 AND task_index = $2 AND completed_date = CURRENT_DATE',
+      'SELECT * FROM task_completions WHERE user_id =  AND task_index =  AND completed_date = CURRENT_DATE',
       [req.params.userId, task_index]
     );
     
     if (existing.rows.length > 0) {
       await pool.query(
-        'DELETE FROM task_completions WHERE user_id = $1 AND task_index = $2 AND completed_date = CURRENT_DATE',
+        'DELETE FROM task_completions WHERE user_id =  AND task_index =  AND completed_date = CURRENT_DATE',
         [req.params.userId, task_index]
       );
     } else {
       await pool.query(
-        'INSERT INTO task_completions (user_id, task_index) VALUES ($1, $2)',
+        'INSERT INTO task_completions (user_id, task_index) VALUES (, )',
         [req.params.userId, task_index]
       );
     }
@@ -325,7 +320,7 @@ app.post('/api/tasks/:userId/toggle', async (req, res) => {
 app.get('/api/streaks/:userId', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT streak_date FROM streaks WHERE user_id = $1 ORDER BY streak_date DESC',
+      'SELECT streak_date FROM streaks WHERE user_id =  ORDER BY streak_date DESC',
       [req.params.userId]
     );
     const streaks = {};
@@ -341,7 +336,7 @@ app.get('/api/streaks/:userId', async (req, res) => {
 app.post('/api/streaks/:userId', async (req, res) => {
   try {
     await pool.query(
-      'INSERT INTO streaks (user_id, streak_date) VALUES ($1, CURRENT_DATE) ON CONFLICT DO NOTHING',
+      'INSERT INTO streaks (user_id, streak_date) VALUES (, CURRENT_DATE) ON CONFLICT DO NOTHING',
       [req.params.userId]
     );
     res.json({ success: true });
@@ -364,7 +359,7 @@ wss.on('connection', (ws) => {
       switch (message.type) {
         case 'auth':
           userId = message.userId;
-          const userResult = await pool.query('SELECT id, username, avatar FROM users WHERE id = $1', [userId]);
+          const userResult = await pool.query('SELECT id, username, avatar FROM users WHERE id = ', [userId]);
           if (userResult.rows.length === 0) {
             ws.send(JSON.stringify({ type: 'error', data: 'User not found' }));
             return;
@@ -386,7 +381,7 @@ wss.on('connection', (ws) => {
             data: { id: user.id, username: user.username, avatar: user.avatar }
           }, userId);
           
-          console.log(`✅ ${user.username} connected`);
+          console.log(✅  connected);
           break;
 
         case 'message':
@@ -405,8 +400,8 @@ wss.on('connection', (ws) => {
           };
           
           await pool.query(
-            `INSERT INTO chat_messages (id, user_id, username, content, target_user_id, is_private) 
-             VALUES ($1, $2, $3, $4, $5, $6)`,
+            INSERT INTO chat_messages (id, user_id, username, content, target_user_id, is_private) 
+             VALUES (, , , , , ),
             [msgData.id, msgData.user_id, msgData.username, msgData.content, msgData.target_user_id, msgData.is_private]
           );
           
@@ -436,7 +431,7 @@ wss.on('connection', (ws) => {
     if (userId && clients.has(userId)) {
       const user = clients.get(userId);
       clients.delete(userId);
-      console.log(`🔴 ${user.username} disconnected`);
+      console.log(🔴  disconnected);
       
       broadcast({
         type: 'user_left',
@@ -458,7 +453,7 @@ function broadcast(data, excludeUserId = null) {
 // ==================== CREATE TABLES ====================
 async function initDatabase() {
   try {
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
@@ -469,9 +464,9 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS posts (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -482,9 +477,9 @@ async function initDatabase() {
         likes TEXT[] DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW()
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS chat_messages (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -494,9 +489,9 @@ async function initDatabase() {
         is_private BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS diary_entries (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -504,9 +499,9 @@ async function initDatabase() {
         mood TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS routines (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -514,9 +509,9 @@ async function initDatabase() {
         content TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS task_completions (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -524,16 +519,16 @@ async function initDatabase() {
         completed_date DATE DEFAULT CURRENT_DATE,
         UNIQUE(user_id, task_index, completed_date)
       );
-    `);
+    );
 
-    await pool.query(`
+    await pool.query(
       CREATE TABLE IF NOT EXISTS streaks (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
         streak_date DATE DEFAULT CURRENT_DATE,
         UNIQUE(user_id, streak_date)
       );
-    `);
+    );
 
     // Create demo users
     const userCheck = await pool.query('SELECT * FROM users LIMIT 1');
@@ -549,7 +544,7 @@ async function initDatabase() {
       for (const user of demoUsers) {
         const hashed = await bcrypt.hash(user.password, 10);
         await pool.query(
-          'INSERT INTO users (id, username, password) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING',
+          'INSERT INTO users (id, username, password) VALUES (, , ) ON CONFLICT DO NOTHING',
           [user.id, user.username, hashed]
         );
       }
@@ -567,10 +562,10 @@ initDatabase();
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`✅ Server running on port ${PORT}`);
-  console.log(`🔌 WebSocket server ready`);
-  console.log(`🌐 API URL: https://nexus-realtime-jsti.onrender.com/api`);
-  console.log(`🔗 WebSocket URL: wss://nexus-realtime-jsti.onrender.com`);
+  console.log(✅ Server running on port );
+  console.log(🔌 WebSocket server ready);
+  console.log(🌐 API URL: https://nexus-realtime-jsti.onrender.com/api);
+  console.log(🔗 WebSocket URL: wss://nexus-realtime-jsti.onrender.com);
 });
 
 // Handle shutdown gracefully
@@ -582,7 +577,3 @@ process.on('SIGTERM', () => {
     });
   });
 });
-EOF
-
-# Verify the file is correct
-head -5 server.js
