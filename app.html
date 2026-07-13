@@ -139,10 +139,24 @@
         </div>
     </div>
 
+    <!-- ==================== SCRIPTS ==================== -->
+    <!-- FIX: Use window.API_BASE_URL to avoid TDZ issues -->
+    <script>
+        // Set API URL on window object - FIXED
+        window.API_BASE_URL = 'https://nexus-realtime-jsti.onrender.com/api';
+        console.log('✅ API_BASE_URL set:', window.API_BASE_URL);
+    </script>
+
+    <!-- Load scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/auth.js"></script>
+
+    <!-- Main App Script -->
     <script>
         // ==================== CONFIGURATION ====================
-        // YOUR ACTUAL RENDER URLs - HARDCODED
-        const API_URL = 'https://nexus-realtime-jsti.onrender.com/api';
+        // Use window.API_BASE_URL from above
+        const API_URL = window.API_BASE_URL || 'https://nexus-realtime-jsti.onrender.com/api';
         const WS_URL = 'wss://nexus-realtime-jsti.onrender.com';
 
         console.log('🔗 API URL:', API_URL);
