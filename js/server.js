@@ -1,4 +1,4 @@
-// server.js - Place this in the ROOT of your repository
+// server.js - Complete Real-time Server
 const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
@@ -61,7 +61,7 @@ app.post('/api/signup', async (req, res) => {
       [id, username, hashedPassword]
     );
 
-    const token = jwt.sign({ userId: id }, 'nexus_super_secret_key_2024', { expiresIn: '7d' });
+    const token = jwt.sign({ userId: id }, process.env.JWT_SECRET || 'nexus_super_secret_key_2024', { expiresIn: '7d' });
     res.json({ success: true, token, user: { id, username } });
   } catch (error) {
     console.error('Signup error:', error);
@@ -88,7 +88,7 @@ app.post('/api/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 
-    const token = jwt.sign({ userId: user.id }, 'nexus_super_secret_key_2024', { expiresIn: '7d' });
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET || 'nexus_super_secret_key_2024', { expiresIn: '7d' });
     res.json({ 
       success: true, 
       token, 
@@ -105,6 +105,31 @@ app.get('/api/users', async (req, res) => {
   try {
     const result = await pool.query('SELECT id, username, avatar, bio FROM users ORDER BY username');
     res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get('/api/users/:id', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT id, username, avatar, bio FROM users WHERE id = $1', [req.params.id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(result.rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.put('/api/users/:id', async (req, res) => {
+  const { bio, avatar } = req.body;
+  try {
+    await pool.query(
+      'UPDATE users SET bio = COALESCE($1, bio), avatar = COALESCE($2, avatar), updated_at = NOW() WHERE id = $3',
+      [bio, avatar, req.params.id]
+    );
+    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -139,6 +164,15 @@ app.post('/api/posts', async (req, res) => {
   }
 });
 
+app.delete('/api/posts/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.post('/api/posts/:id/like', async (req, res) => {
   const { user_id } = req.body;
   try {
@@ -157,15 +191,6 @@ app.post('/api/posts/:id/like', async (req, res) => {
     
     await pool.query('UPDATE posts SET likes = $1 WHERE id = $2', [likes, req.params.id]);
     res.json({ success: true, likes });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete('/api/posts/:id', async (req, res) => {
-  try {
-    await pool.query('DELETE FROM posts WHERE id = $1', [req.params.id]);
-    res.json({ success: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -537,9 +562,19 @@ initDatabase();
 
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Server running on port ${PORT}`);
   console.log(`🔌 WebSocket server ready`);
   console.log(`🌐 API URL: https://nexus-realtime-jsti.onrender.com/api`);
   console.log(`🔗 WebSocket URL: wss://nexus-realtime-jsti.onrender.com`);
+});
+
+// Handle shutdown gracefully
+process.on('SIGTERM', () => {
+  console.log('🛑 Shutting down...');
+  wss.close(() => {
+    server.close(() => {
+      process.exit(0);
+    });
+  });
 });
