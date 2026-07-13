@@ -1,5 +1,9 @@
-# Create server.js in root
-echo "const express = require('express');
+# Delete the corrupted file
+rm server.js
+
+# Create the correct server.js using a different method
+cat > server.js << 'EOF'
+const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const cors = require('cors');
@@ -454,7 +458,7 @@ function broadcast(data, excludeUserId = null) {
 // ==================== CREATE TABLES ====================
 async function initDatabase() {
   try {
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
@@ -465,9 +469,9 @@ async function initDatabase() {
         created_at TIMESTAMP DEFAULT NOW(),
         updated_at TIMESTAMP DEFAULT NOW()
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS posts (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -478,9 +482,9 @@ async function initDatabase() {
         likes TEXT[] DEFAULT '{}',
         created_at TIMESTAMP DEFAULT NOW()
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -490,9 +494,9 @@ async function initDatabase() {
         is_private BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS diary_entries (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -500,9 +504,9 @@ async function initDatabase() {
         mood TEXT,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS routines (
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -510,9 +514,9 @@ async function initDatabase() {
         content TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS task_completions (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
@@ -520,16 +524,16 @@ async function initDatabase() {
         completed_date DATE DEFAULT CURRENT_DATE,
         UNIQUE(user_id, task_index, completed_date)
       );
-    \`);
+    `);
 
-    await pool.query(\`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS streaks (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(id) ON DELETE CASCADE,
         streak_date DATE DEFAULT CURRENT_DATE,
         UNIQUE(user_id, streak_date)
       );
-    \`);
+    `);
 
     // Create demo users
     const userCheck = await pool.query('SELECT * FROM users LIMIT 1');
@@ -577,4 +581,8 @@ process.on('SIGTERM', () => {
       process.exit(0);
     });
   });
-});" > server.js
+});
+EOF
+
+# Verify the file is correct
+head -5 server.js
