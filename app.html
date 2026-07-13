@@ -2,857 +2,191 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nexus</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe);
-            background-size: 400% 400%;
-            animation: grad 15s ease infinite;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        @keyframes grad {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 500px;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(20px);
-            border-radius: 24px;
-            padding: 24px;
-            border: 1px solid rgba(255,255,255,0.2);
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-        .container::-webkit-scrollbar { width: 4px; }
-        .container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-        
-        .hidden { display: none !important; }
-        
-        /* Auth */
-        .auth-box { text-align: center; }
-        .auth-box h1 {
-            color: white;
-            font-size: 32px;
-            margin-bottom: 4px;
-        }
-        .auth-box p {
-            color: rgba(255,255,255,0.7);
-            margin-bottom: 24px;
-        }
-        .auth-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .auth-tab {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-            background: rgba(255,255,255,0.1);
-            color: rgba(255,255,255,0.6);
-        }
-        .auth-tab.active {
-            background: rgba(255,255,255,0.25);
-            color: white;
-        }
-        .auth-tab:hover { background: rgba(255,255,255,0.2); }
-        
-        .auth-form { display: none; }
-        .auth-form.active { display: block; }
-        
-        .auth-form input {
-            width: 100%;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.9);
-            font-size: 14px;
-            outline: none;
-        }
-        .auth-form input:focus { border-color: #667eea; }
-        
-        .auth-btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .auth-btn:hover { transform: translateY(-2px); }
-        .auth-btn:active { transform: scale(0.98); }
-        
-        .error-msg {
-            color: #f87171;
-            font-size: 13px;
-            margin-top: 8px;
-            display: none;
-        }
-        .error-msg.show { display: block; }
-        .success-msg {
-            color: #34d399;
-            font-size: 13px;
-            margin-top: 8px;
-            display: none;
-        }
-        .success-msg.show { display: block; }
-        
-        /* Chat */
-        .chat-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: white;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .chat-header h2 { font-size: 18px; }
-        .chat-header .user { font-size: 13px; opacity: 0.8; }
-        .chat-header .logout-btn {
-            background: rgba(255,255,255,0.15);
-            border: none;
-            color: white;
-            padding: 6px 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .chat-header .logout-btn:hover { background: rgba(255,255,255,0.25); }
-        
-        .chat-messages {
-            height: 400px;
-            overflow-y: auto;
-            padding: 12px 0;
-            margin: 8px 0;
-        }
-        .chat-messages::-webkit-scrollbar { width: 4px; }
-        .chat-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 2px; }
-        
-        .msg {
-            display: flex;
-            margin-bottom: 8px;
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .msg .avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: white;
-            flex-shrink: 0;
-            font-size: 14px;
-        }
-        .msg.sent { justify-content: flex-end; }
-        .msg.sent .bubble {
-            background: linear-gradient(135deg, rgba(102,126,234,0.6), rgba(118,75,162,0.6));
-            border: 1px solid rgba(102,126,234,0.3);
-            margin-right: 8px;
-        }
-        .msg.received .bubble {
-            background: rgba(255,255,255,0.12);
-            border: 1px solid rgba(255,255,255,0.1);
-            margin-left: 8px;
-        }
-        .msg .bubble {
-            max-width: 75%;
-            padding: 8px 14px;
-            border-radius: 16px;
-            color: white;
-            word-wrap: break-word;
-        }
-        .msg .bubble .sender {
-            font-size: 11px;
-            font-weight: 600;
-            opacity: 0.8;
-        }
-        .msg .bubble .time {
-            font-size: 10px;
-            opacity: 0.5;
-            margin-left: 8px;
-        }
-        .msg .bubble .text {
-            font-size: 14px;
-            margin-top: 2px;
-            line-height: 1.4;
-        }
-        .msg .bubble .delete-btn {
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.4);
-            cursor: pointer;
-            font-size: 12px;
-            margin-top: 2px;
-        }
-        .msg .bubble .delete-btn:hover { color: #f87171; }
-        
-        .chat-input-area {
-            display: flex;
-            gap: 8px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .chat-input-area input {
-            flex: 1;
-            padding: 10px 16px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.9);
-            font-size: 14px;
-            outline: none;
-        }
-        .chat-input-area input:focus { border-color: #667eea; }
-        .chat-input-area button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        .chat-input-area button:hover { transform: translateY(-2px); }
-        .chat-input-area button:active { transform: scale(0.98); }
-        
-        .empty-msg {
-            text-align: center;
-            color: rgba(255,255,255,0.5);
-            padding: 40px 0;
-        }
-        .empty-msg .icon { font-size: 48px; margin-bottom: 12px; }
-        
-        /* Status bar */
-        .status-bar {
-            display: flex;
-            justify-content: space-between;
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            padding: 4px 0;
-        }
-        
-        /* Nav */
-        .nav-bar {
-            display: flex;
-            gap: 4px;
-            margin-top: 12px;
-            padding-top: 12px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-        }
-        .nav-btn {
-            flex: 1;
-            padding: 8px;
-            border: none;
-            border-radius: 8px;
-            background: rgba(255,255,255,0.05);
-            color: rgba(255,255,255,0.6);
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-        .nav-btn:hover { background: rgba(255,255,255,0.15); }
-        .nav-btn.active {
-            background: rgba(255,255,255,0.2);
-            color: white;
-        }
-        
-        /* Profile */
-        .profile-section { padding: 8px 0; }
-        .profile-section textarea {
-            width: 100%;
-            padding: 10px 14px;
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 12px;
-            background: rgba(255,255,255,0.9);
-            font-size: 14px;
-            resize: vertical;
-            min-height: 80px;
-            font-family: inherit;
-            outline: none;
-        }
-        .profile-section textarea:focus { border-color: #667eea; }
-        .profile-section .save-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 8px;
-        }
-        .profile-section .save-btn:hover { transform: translateY(-2px); }
-        
-        /* Wallpapers */
-        .wp-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-            margin: 8px 0;
-        }
-        .wp-item {
-            aspect-ratio: 4/3;
-            border-radius: 12px;
-            background-size: cover;
-            background-position: center;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-        }
-        .wp-item:hover { transform: scale(1.02); }
-        .wp-item.active { border-color: #667eea; }
-        
-        /* Responsive */
-        @media (max-width: 480px) {
-            .container { padding: 16px; }
-            .chat-messages { height: 300px; }
-            .msg .bubble { max-width: 85%; }
-        }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nexus · id³</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <div class="signature">id³</div>
+    <button class="wp-fab" onclick="Nexus.navigate('wallpapers')">🎨</button>
+    <div id="toastContainer"></div>
 
-<div class="container" id="app">
-    <!-- Auth Screen -->
-    <div id="authScreen" class="auth-box">
-        <div style="font-size: 48px; margin-bottom: 8px;">💬</div>
-        <h1>Nexus</h1>
-        <p>Chat across all your devices!</p>
-        
-        <div class="auth-tabs">
-            <button class="auth-tab active" data-tab="login" onclick="switchTab('login')">🔑 Sign In</button>
-            <button class="auth-tab" data-tab="signup" onclick="switchTab('signup')">✨ Sign Up</button>
-        </div>
-        
-        <div id="loginForm" class="auth-form active">
-            <input type="text" id="loginUsername" placeholder="Username">
-            <input type="password" id="loginPassword" placeholder="Password">
-            <button class="auth-btn" onclick="login()">Sign In</button>
-            <div id="loginError" class="error-msg"></div>
-        </div>
-        
-        <div id="signupForm" class="auth-form">
-            <input type="text" id="signupUsername" placeholder="Username (2-20 chars, letters/numbers)">
-            <input type="password" id="signupPassword" placeholder="Password (min 4 chars)">
-            <input type="password" id="signupConfirm" placeholder="Confirm Password">
-            <button class="auth-btn" onclick="signup()">Create Account</button>
-            <div id="signupError" class="error-msg"></div>
-            <div id="signupSuccess" class="success-msg"></div>
+    <!-- Aura Selection -->
+    <div class="page" id="page-select">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:3px;">Choose Your Auras</h2>
+            <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Select up to 3 energies</p>
+            <div class="counter-chip"><span>✧</span> <strong id="counter">0</strong><span>/3</span></div>
+            <div class="aura-grid" id="auraGrid"></div>
+            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;">Continue →</button>
         </div>
     </div>
 
-    <!-- Chat Screen -->
-    <div id="chatScreen" class="hidden">
-        <div class="chat-header">
-            <div>
-                <h2>💬 Nexus</h2>
-                <span class="user">👤 <span id="currentUser"></span></span>
+    <!-- Dashboard -->
+    <div class="page" id="page-dashboard">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <h2 id="homeTitle" style="font-size:17px;font-weight:700;">Dashboard</h2>
+                <span id="homeBadge" style="font-size:10px;background:rgba(0,0,0,0.04);padding:3px 10px;border-radius:18px;">⚡</span>
             </div>
-            <button class="logout-btn" onclick="logout()">🚪 Logout</button>
-        </div>
-        
-        <div class="status-bar">
-            <span id="messageCount">0 messages</span>
-            <span id="onlineCount">🟢 0 online</span>
-        </div>
-        
-        <div class="chat-messages" id="messages"></div>
-        
-        <div class="chat-input-area">
-            <input type="text" id="messageInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
-            <button onclick="sendMessage()">📤 Send</button>
-        </div>
-        
-        <div class="nav-bar">
-            <button class="nav-btn active" data-page="chat" onclick="switchPage('chat')">💬 Chat</button>
-            <button class="nav-btn" data-page="profile" onclick="switchPage('profile')">👤 Profile</button>
-            <button class="nav-btn" data-page="wallpapers" onclick="switchPage('wallpapers')">🎨 Themes</button>
-        </div>
-        
-        <!-- Profile Page -->
-        <div id="profilePage" class="profile-section hidden">
-            <h3 style="color:white;margin-bottom:12px;">👤 My Profile</h3>
-            <div style="text-align:center;margin-bottom:12px;">
-                <div id="profileAvatar" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:28px;color:white;margin:0 auto;"></div>
-                <div style="color:white;font-weight:600;margin-top:4px;">@<span id="profileUsername"></span></div>
+            <div class="score-ring-wrap">
+                <div class="score-ring">
+                    <svg viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="43" fill="none" stroke="rgba(0,0,0,0.06)" stroke-width="5"/>
+                        <circle id="scoreRing" cx="50" cy="50" r="43" fill="none" stroke="#0f172a" stroke-width="5" stroke-linecap="round" stroke-dasharray="270.18" stroke-dashoffset="270.18"/>
+                    </svg>
+                    <div class="center"><div class="num" id="score">0%</div><div class="label">Strength</div></div>
+                </div>
             </div>
-            <textarea id="profileBio" placeholder="Tell us about yourself..."></textarea>
-            <input type="text" id="profileStatus" placeholder="Status..." style="width:100%;padding:10px 14px;margin-top:8px;border:1px solid rgba(255,255,255,0.2);border-radius:12px;background:rgba(255,255,255,0.9);font-size:14px;outline:none;">
-            <button class="save-btn" onclick="saveProfile()">💾 Save Profile</button>
+            <div class="stat-row">
+                <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="streakCount">0</div><div class="stat-label">Streak</div></div>
+                <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value" id="tasksDone">0</div><div class="stat-label">Tasks</div></div>
+                <div class="stat-card"><div class="stat-icon">📖</div><div class="stat-value" id="diaryCount">0</div><div class="stat-label">Diary</div></div>
+                <div class="stat-card"><div class="stat-icon">💬</div><div class="stat-value" id="msgCount">0</div><div class="stat-label">Chats</div></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:#475569;margin-bottom:6px;">
+                <span>Today</span><span id="taskProgress" style="color:#94a3b8;">0/0</span>
+            </div>
+            <div id="tasks"></div>
+            <div class="calendar-wrap">
+                <div class="cal-header"><strong>📅 Calendar</strong><span id="monthLabel" style="font-size:11px;color:#94a3b8;">—</span></div>
+                <div class="cal-grid" id="calendar"></div>
+            </div>
+            <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn-sm" id="btnResetDay">↺ Reset</button>
+                <button class="btn-sm" id="btnAuras">✧ Auras</button>
+            </div>
         </div>
-        
-        <!-- Wallpapers Page -->
-        <div id="wallpapersPage" class="hidden">
-            <h3 style="color:white;margin-bottom:12px;">🎨 Themes</h3>
+    </div>
+
+    <!-- Diary -->
+    <div class="page" id="page-diary">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📖 Diary</h2>
+            <textarea id="diaryInput" rows="3" placeholder="Dear diary..."></textarea>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+                <input type="text" id="diaryMood" placeholder="Mood" style="flex:1;">
+                <button class="btn-sm btn-primary" id="btnSaveDiary" style="width:auto;">💾</button>
+            </div>
+            <input type="search" id="diarySearch" placeholder="🔍 Search..." oninput="Nexus.renderDiary()" style="margin-top:8px;">
+            <div id="diaryEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Routines -->
+    <div class="page" id="page-routine">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📋 Routines</h2>
+            <input type="text" id="routineTitle" placeholder="Title...">
+            <textarea id="routineInput" rows="2" placeholder="Description..." style="margin-top:6px;"></textarea>
+            <button class="btn-sm btn-primary" id="btnSaveRoutine" style="margin-top:6px;width:100%;">💾 Save</button>
+            <div id="routineEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="page" id="page-chat">
+        <div class="container">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                <h2 style="font-size:19px;font-weight:700;">💬 Chat</h2>
+                <span style="font-size:11px;color:#4ade80;">● <span id="onlineCount">0</span></span>
+            </div>
+            <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
+                You: <strong id="myUsername">—</strong>
+                <button class="btn-sm" id="btnChangeUsername" style="margin-left:6px;font-size:10px;">✏️</button>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+            </div>
+            <div style="display:flex;gap:6px;">
+                <input type="text" id="chatInput" placeholder="Message..." style="flex:1;">
+                <button class="btn-sm btn-primary" id="btnSendMessage" style="width:auto;">📤</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Feed -->
+    <div class="page" id="page-social">
+        <div class="container" style="padding: 16px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                <h2 style="font-size:20px;font-weight:700;">Nexus</h2>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <button class="btn-sm" id="btnWalls" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="Wallpapers">🎨</button>
+                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="New Post">➕</button>
+                </div>
+            </div>
+            <div class="ig-story-row" id="storyRow"></div>
+            <div style="background:rgba(255,255,255,0.5);border-radius:12px;padding:10px 12px;margin-bottom:14px;border:1px solid rgba(0,0,0,0.04);">
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <div class="ig-post-avatar" style="width:32px;height:32px;font-size:16px;flex-shrink:0;">
+                        <span id="postAvatarEmoji">😊</span>
+                    </div>
+                    <input type="text" id="postInput" placeholder="What's on your mind?" style="flex:1;border:none;background:transparent;padding:6px 0;font-size:13px;outline:none;">
+                    <button class="btn-sm btn-primary" id="btnCreatePost" style="width:auto;padding:6px 14px;font-size:12px;">Post</button>
+                </div>
+            </div>
+            <div id="socialFeed" style="max-height:520px;overflow-y:auto;padding-bottom:10px;">
+                <p style="color:#94a3b8;text-align:center;padding:30px 0;">Loading...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile -->
+    <div class="page" id="page-profile">
+        <div class="container">
+            <div class="profile-header">
+                <div class="profile-avatar-large"><div class="inner" id="profileAvatarEmoji">😊</div></div>
+                <div class="profile-name" id="profileName">—</div>
+                <div class="profile-username" id="profileUsername">@—</div>
+                <div class="profile-stats">
+                    <div class="profile-stat"><div class="num" id="profilePosts">0</div><div class="label">Posts</div></div>
+                    <div class="profile-stat"><div class="num" id="profileFollowers">0</div><div class="label">Followers</div></div>
+                    <div class="profile-stat"><div class="num" id="profileFollowing">0</div><div class="label">Following</div></div>
+                </div>
+                <div class="profile-bio" id="profileBio">Building my energy. One aura at a time. ⚡</div>
+                <button class="profile-edit-btn" id="btnEditProfile">✏️ Edit Profile</button>
+                <button class="profile-edit-btn" id="btnLogout" style="margin-top:6px;color:#ef4444;border-color:#ef4444;">🚪 Logout</button>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px;">
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileDashboard">📊 Dashboard</button>
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileAuras">✧ Auras</button>
+            </div>
+            <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;">📸 Your Posts</h3>
+            <div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
+                <p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:16px 0;">No posts yet.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Wallpapers -->
+    <div class="page" id="page-wallpapers">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Wallpapers</h2>
+            <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random Wallpaper</button>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">0+ wallpapers</p>
             <div class="wp-grid" id="wpGrid"></div>
         </div>
     </div>
-</div>
 
-<script>
-// ==================== CONFIG ====================
-const API_URL = window.location.hostname === 'localhost' 
-    ? 'http://localhost:3000/api' 
-    : 'https://nexus-realtime-jsti.onrender.com/api';
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+        <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
+        <button class="nav-btn" data-page="diary"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
+        <button class="nav-btn" data-page="routine"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
+        <button class="nav-btn" data-page="chat"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
+        <button class="nav-btn" data-page="wallpapers"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
+        <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+    </nav>
 
-let currentUser = null;
-let messages = [];
-let profiles = {};
-let wallpapers = {};
-let messageInterval = null;
-let onlineUsers = new Set();
-
-// ==================== HELPERS ====================
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-function showToast(msg, isError = false) {
-    const el = document.createElement('div');
-    el.style.cssText = `
-        position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-        padding: 12px 24px; border-radius: 12px; 
-        background: ${isError ? '#ef4444' : '#34d399'}; 
-        color: white; font-weight: 600; font-size: 14px;
-        z-index: 9999; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        animation: fadeIn 0.3s ease;
-    `;
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => {
-        el.style.opacity = '0';
-        el.style.transition = 'opacity 0.3s';
-        setTimeout(() => el.remove(), 300);
-    }, 2500);
-}
-
-// ==================== AUTH ====================
-function switchTab(tab) {
-    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector(`.auth-tab[data-tab="${tab}"]`).classList.add('active');
-    document.getElementById('loginForm').classList.toggle('active', tab === 'login');
-    document.getElementById('signupForm').classList.toggle('active', tab === 'signup');
-}
-
-async function login() {
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    const errorEl = document.getElementById('loginError');
-    
-    if (!username || !password) {
-        errorEl.textContent = 'All fields required';
-        errorEl.classList.add('show');
-        return;
-    }
-    errorEl.classList.remove('show');
-    
-    try {
-        const res = await fetch(`${API_URL}/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        
-        if (!res.ok) {
-            errorEl.textContent = data.error || 'Login failed';
-            errorEl.classList.add('show');
-            return;
-        }
-        
-        currentUser = data.username;
-        localStorage.setItem('nexus_user', currentUser);
-        showToast('Welcome back, ' + currentUser + '! 🎉');
-        startApp();
-    } catch (error) {
-        errorEl.textContent = 'Connection error. Please try again.';
-        errorEl.classList.add('show');
-    }
-}
-
-async function signup() {
-    const username = document.getElementById('signupUsername').value.trim();
-    const password = document.getElementById('signupPassword').value;
-    const confirm = document.getElementById('signupConfirm').value;
-    const errorEl = document.getElementById('signupError');
-    const successEl = document.getElementById('signupSuccess');
-    
-    errorEl.classList.remove('show');
-    successEl.classList.remove('show');
-    
-    if (!username || !password || !confirm) {
-        errorEl.textContent = 'All fields required';
-        errorEl.classList.add('show');
-        return;
-    }
-    if (password !== confirm) {
-        errorEl.textContent = 'Passwords do not match';
-        errorEl.classList.add('show');
-        return;
-    }
-    if (password.length < 4) {
-        errorEl.textContent = 'Password must be at least 4 characters';
-        errorEl.classList.add('show');
-        return;
-    }
-    if (username.length < 2 || username.length > 20) {
-        errorEl.textContent = 'Username 2-20 characters';
-        errorEl.classList.add('show');
-        return;
-    }
-    if (!/^[a-zA-Z0-9]+$/.test(username)) {
-        errorEl.textContent = 'Only letters and numbers';
-        errorEl.classList.add('show');
-        return;
-    }
-    
-    try {
-        const res = await fetch(`${API_URL}/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        
-        if (!res.ok) {
-            errorEl.textContent = data.error || 'Signup failed';
-            errorEl.classList.add('show');
-            return;
-        }
-        
-        successEl.textContent = 'Account created! Please sign in.';
-        successEl.classList.add('show');
-        document.getElementById('signupUsername').value = '';
-        document.getElementById('signupPassword').value = '';
-        document.getElementById('signupConfirm').value = '';
-        setTimeout(() => switchTab('login'), 1500);
-    } catch (error) {
-        errorEl.textContent = 'Connection error. Please try again.';
-        errorEl.classList.add('show');
-    }
-}
-
-function logout() {
-    localStorage.removeItem('nexus_user');
-    if (messageInterval) clearInterval(messageInterval);
-    currentUser = null;
-    document.getElementById('chatScreen').classList.add('hidden');
-    document.getElementById('authScreen').classList.remove('hidden');
-    showToast('Logged out');
-}
-
-// ==================== START APP ====================
-async function startApp() {
-    document.getElementById('authScreen').classList.add('hidden');
-    document.getElementById('chatScreen').classList.remove('hidden');
-    document.getElementById('currentUser').textContent = currentUser;
-    document.getElementById('profileUsername').textContent = currentUser;
-    document.getElementById('profileAvatar').textContent = currentUser.charAt(0).toUpperCase();
-    
-    // Load data
-    await loadProfiles();
-    await loadWallpapers();
-    await loadMessages();
-    loadProfileUI();
-    renderWallpapers();
-    
-    // Start polling
-    if (messageInterval) clearInterval(messageInterval);
-    messageInterval = setInterval(() => {
-        loadMessages();
-        updateOnlineStatus();
-    }, 3000);
-}
-
-// ==================== MESSAGES ====================
-async function loadMessages() {
-    try {
-        const res = await fetch(`${API_URL}/messages`);
-        if (!res.ok) return;
-        messages = await res.json();
-        renderMessages();
-    } catch (error) {
-        console.error('Load messages error:', error);
-    }
-}
-
-function renderMessages() {
-    const container = document.getElementById('messages');
-    document.getElementById('messageCount').textContent = messages.length + ' messages';
-    
-    if (!messages.length) {
-        container.innerHTML = `
-            <div class="empty-msg">
-                <div class="icon">✨</div>
-                <p>No messages yet</p>
-                <p style="font-size:12px;">Be the first to say hello!</p>
-            </div>
-        `;
-        return;
-    }
-    
-    // Show last 20 messages
-    const display = messages.slice(-20);
-    container.innerHTML = display.map(msg => {
-        const isOwn = msg.username === currentUser;
-        const avatarColor = stringToColor(msg.username);
-        
-        return `
-            <div class="msg ${isOwn ? 'sent' : 'received'}">
-                ${!isOwn ? `<div class="avatar" style="background:${avatarColor}">${msg.username.charAt(0).toUpperCase()}</div>` : ''}
-                <div class="bubble">
-                    <div>
-                        <span class="sender">${escapeHtml(msg.username)}</span>
-                        <span class="time">${formatTime(msg.timestamp)}</span>
-                    </div>
-                    <div class="text">${escapeHtml(msg.text)}</div>
-                    ${isOwn ? `<button class="delete-btn" onclick="deleteMessage('${msg.id}')">🗑️</button>` : ''}
-                </div>
-                ${isOwn ? `<div class="avatar" style="background:${avatarColor}">${msg.username.charAt(0).toUpperCase()}</div>` : ''}
-            </div>
-        `;
-    }).join('');
-    
-    container.scrollTop = container.scrollHeight;
-}
-
-function stringToColor(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const colors = ['#FF6B6B','#4ECDC4','#45B7D1','#96CEB4','#FFEAA7','#DDA0DD','#98D8C8','#F7B787','#FF8A80','#B388FF','#82B1FF','#B9F6CA','#FFE57F','#FF80AB','#EA80FC','#8C9EFF'];
-    return colors[Math.abs(hash) % colors.length];
-}
-
-function formatTime(ts) {
-    if (!ts) return '';
-    try {
-        const diff = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-        if (diff < 60) return 'now';
-        if (diff < 3600) return Math.floor(diff / 60) + 'm';
-        if (diff < 86400) return Math.floor(diff / 3600) + 'h';
-        return new Date(ts).toLocaleDateString();
-    } catch { return ''; }
-}
-
-async function sendMessage() {
-    const input = document.getElementById('messageInput');
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/messages`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: currentUser, text })
-        });
-        
-        if (res.ok) {
-            input.value = '';
-            await loadMessages();
-        }
-    } catch (error) {
-        showToast('Failed to send message', true);
-    }
-}
-
-async function deleteMessage(id) {
-    if (!confirm('Delete this message?')) return;
-    try {
-        await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' });
-        await loadMessages();
-    } catch (error) {
-        showToast('Failed to delete', true);
-    }
-}
-
-// ==================== PROFILES ====================
-async function loadProfiles() {
-    try {
-        const res = await fetch(`${API_URL}/profiles`);
-        if (res.ok) profiles = await res.json();
-    } catch (error) {
-        console.error('Load profiles error:', error);
-    }
-}
-
-function loadProfileUI() {
-    const p = profiles[currentUser] || {};
-    document.getElementById('profileBio').value = p.bio || '';
-    document.getElementById('profileStatus').value = p.status || '';
-}
-
-async function saveProfile() {
-    const bio = document.getElementById('profileBio').value.trim();
-    const status = document.getElementById('profileStatus').value.trim();
-    const wallpaper = localStorage.getItem('nexus_wallpaper') || '🌈 Gradient';
-    
-    try {
-        const res = await fetch(`${API_URL}/profiles/${currentUser}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ bio, status, wallpaper })
-        });
-        
-        if (res.ok) {
-            showToast('Profile saved! ✅');
-            await loadProfiles();
-        }
-    } catch (error) {
-        showToast('Failed to save profile', true);
-    }
-}
-
-// ==================== WALLPAPERS ====================
-async function loadWallpapers() {
-    try {
-        const res = await fetch(`${API_URL}/wallpapers`);
-        if (res.ok) wallpapers = await res.json();
-    } catch (error) {
-        console.error('Load wallpapers error:', error);
-    }
-}
-
-function renderWallpapers() {
-    const grid = document.getElementById('wpGrid');
-    if (!grid) return;
-    
-    const entries = Object.entries(wallpapers);
-    if (!entries.length) {
-        grid.innerHTML = '<p style="color:white;">No wallpapers available</p>';
-        return;
-    }
-    
-    grid.innerHTML = entries.map(([name, url]) => {
-        const isActive = localStorage.getItem('nexus_wallpaper') === name;
-        const bgStyle = url === 'gradient' 
-            ? 'background:linear-gradient(135deg,#667eea,#764ba2,#f093fb,#f5576c,#4facfe);'
-            : `background-image:url(${url});background-size:cover;`;
-        
-        return `
-            <div class="wp-item ${isActive ? 'active' : ''}" 
-                 style="${bgStyle}" 
-                 onclick="selectWallpaper('${name}')"
-                 title="${name}">
-                ${url === 'gradient' ? '🌈' : ''}
-            </div>
-        `;
-    }).join('');
-}
-
-function selectWallpaper(name) {
-    localStorage.setItem('nexus_wallpaper', name);
-    document.querySelectorAll('.wp-item').forEach(el => el.classList.remove('active'));
-    document.querySelectorAll('.wp-item').forEach(el => {
-        if (el.title === name) el.classList.add('active');
-    });
-    showToast('Theme applied: ' + name);
-    updateBackground(name);
-}
-
-function updateBackground(name) {
-    const url = wallpapers[name];
-    if (!url) return;
-    
-    if (url === 'gradient') {
-        document.body.style.cssText = `
-            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb, #f5576c, #4facfe);
-            background-size: 400% 400%;
-            animation: grad 15s ease infinite;
-        `;
-    } else {
-        document.body.style.cssText = `
-            background-image: url(${url});
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-        `;
-    }
-}
-
-// ==================== ONLINE STATUS ====================
-function updateOnlineStatus() {
-    // Simple online tracking - users who sent messages in last 5 minutes
-    const now = Date.now();
-    const online = new Set();
-    messages.forEach(msg => {
-        if (msg.timestamp) {
-            const diff = Math.floor((now - new Date(msg.timestamp).getTime()) / 1000);
-            if (diff < 300) {
-                online.add(msg.username);
-            }
-        }
-    });
-    onlineUsers = online;
-    document.getElementById('onlineCount').textContent = '🟢 ' + onlineUsers.size + ' online';
-}
-
-// ==================== NAVIGATION ====================
-function switchPage(page) {
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.querySelector(`.nav-btn[data-page="${page}"]`).classList.add('active');
-    
-    document.getElementById('messages').parentElement.style.display = page === 'chat' ? 'block' : 'none';
-    document.getElementById('profilePage').classList.toggle('hidden', page !== 'profile');
-    document.getElementById('wallpapersPage').classList.toggle('hidden', page !== 'wallpapers');
-    document.querySelector('.chat-input-area').style.display = page === 'chat' ? 'flex' : 'none';
-    document.querySelector('.status-bar').style.display = page === 'chat' ? 'flex' : 'none';
-    
-    if (page === 'wallpapers') renderWallpapers();
-    if (page === 'profile') loadProfileUI();
-}
-
-// ==================== AUTO-LOGIN ====================
-const savedUser = localStorage.getItem('nexus_user');
-if (savedUser) {
-    currentUser = savedUser;
-    startApp();
-}
-
-// Restore wallpaper
-const savedWallpaper = localStorage.getItem('nexus_wallpaper');
-if (savedWallpaper) {
-    setTimeout(() => {
-        loadWallpapers().then(() => {
-            updateBackground(savedWallpaper);
-        });
-    }, 500);
-}
-</script>
-
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/auras.js"></script>
+    <script src="js/wallpapers.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>
