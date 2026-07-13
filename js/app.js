@@ -1,77 +1,4 @@
-// js/app.js - Complete app logic
-// ==================== AURAS ====================
-const AURAS = {
-    focus: { name: 'Focus', emoji: '🎯', accent: '#ff6b6b', desc: 'Concentration', tasks: ['Deep work 25 min', 'No phone 1 hour', 'Single-task', 'Clear desk', 'Pomodoro'] },
-    creativity: { name: 'Creativity', emoji: '🎨', accent: '#f06595', desc: 'Imagination', tasks: ['Free-write 10 min', 'Sketch/doodle', 'Brainstorm', 'New music', 'Rearrange'] },
-    discipline: { name: 'Discipline', emoji: '🧘', accent: '#748ffc', desc: 'Self-control', tasks: ['Wake up on time', 'Morning routine', 'Say no', 'Priority task', 'Reflection'] },
-    vitality: { name: 'Vitality', emoji: '⚡', accent: '#ffd43b', desc: 'Energy', tasks: ['Exercise 30 min', '8 glasses water', 'Whole foods', 'Cold shower', 'Stretch'] },
-    empathy: { name: 'Empathy', emoji: '🤝', accent: '#ff8787', desc: 'Connection', tasks: ['Listen fully', 'Ask feelings', 'Validate', 'Active listening', 'Compliment'] },
-    resilience: { name: 'Resilience', emoji: '🛡️', accent: '#20c997', desc: 'Bounce back', tasks: ['Reframe', 'Gratitude', 'Do hard thing', 'Journal', 'Mental break'] },
-    clarity: { name: 'Clarity', emoji: '🔮', accent: '#b197fc', desc: 'Clear mind', tasks: ['Meditate', 'Top priorities', 'Declutter', 'Digital detox', 'Review goals'] },
-    charisma: { name: 'Charisma', emoji: '✨', accent: '#f783ac', desc: 'Presence', tasks: ['Smile', 'Tell story', 'Eye contact', 'Open posture', 'Make laugh'] },
-    courage: { name: 'Courage', emoji: '🦁', accent: '#ff922b', desc: 'Face fears', tasks: ['Do scary thing', 'Speak up', 'Try new', 'Admit mistake', 'Stand up'] },
-    patience: { name: 'Patience', emoji: '⏳', accent: '#a9e34b', desc: 'Steady', tasks: ['Wait', 'Let others', 'Deep breath', 'Accept delays', 'Count to 10'] },
-    gratitude: { name: 'Gratitude', emoji: '🙏', accent: '#e599f7', desc: 'Appreciate', tasks: ['3 gratitudes', 'Thank someone', 'Notice joys', 'Nature', 'Reflect'] },
-    ambition: { name: 'Ambition', emoji: '🚀', accent: '#f03e3e', desc: 'Drive', tasks: ['Bold goal', 'Take action', 'Network', 'Learn skill', 'Visualize'] },
-    mindfulness: { name: 'Mindfulness', emoji: '🧘‍♀️', accent: '#63e6be', desc: 'Present', tasks: ['Body scan', 'Eat mindfully', '5 senses', 'Mindful walk', 'Observe'] },
-    leadership: { name: 'Leadership', emoji: '👑', accent: '#f59e0b', desc: 'Inspire', tasks: ['Delegate', 'Give direction', 'Recognize', 'Decide', 'Lead'] },
-    adventure: { name: 'Adventure', emoji: '🏔️', accent: '#3b82f6', desc: 'Explore', tasks: ['New place', 'New food', 'Say yes', 'Break routine', 'Plan'] }
-};
-
-// ==================== WALLPAPERS ====================
-const UNSPLASH = [
-    'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
-    'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1920&q=80',
-    'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=80',
-    'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80',
-    'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=80',
-    'https://images.unsplash.com/photo-1454496522488-7a8e488e8606?w=1920&q=80',
-    'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=1920&q=80',
-    'https://images.unsplash.com/photo-1470071459606-3b5ec3a7fe05?w=1920&q=80',
-    'https://images.unsplash.com/photo-1440589473619-3cde28941638?w=1920&q=80',
-    'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=1920&q=80',
-    'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1920&q=80',
-    'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=80',
-    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1920&q=80',
-    'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1920&q=80',
-    'https://images.unsplash.com/photo-1480714378408-67cf0d13bc1b?w=1920&q=80',
-    'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=1920&q=80',
-    'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80',
-    'https://images.unsplash.com/photo-1511818966892-d7b671e67291?w=1920&q=80',
-    'https://images.unsplash.com/photo-1496568816309-51d7c20e3b21?w=1920&q=80',
-    'https://images.unsplash.com/photo-1557682250-33bd709cbe85?w=1920&q=80',
-    'https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=1920&q=80',
-    'https://images.unsplash.com/photo-1557682260-96773eb01377?w=1920&q=80',
-    'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?w=1920&q=80',
-    'https://images.unsplash.com/photo-1558470598-a5dda9640f68?w=1920&q=80',
-    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=1920&q=80',
-    'https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=1920&q=80',
-    'https://images.unsplash.com/photo-1500462918059-b1a0cb512f1d?w=1920&q=80',
-    'https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=1920&q=80',
-    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=1920&q=80',
-    'https://images.unsplash.com/photo-1504333638930-c8787321eee0?w=1920&q=80',
-    'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=1920&q=80',
-    'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80',
-    'https://images.unsplash.com/photo-1505228395891-9a51e7e86bf6?w=1920&q=80',
-    'https://images.unsplash.com/photo-1471922694854-ff1b63b20036?w=1920&q=80',
-    'https://images.unsplash.com/photo-1518495973542-4542c06a5843?w=1920&q=80',
-    'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=1920&q=80',
-    'https://images.unsplash.com/photo-1448375240586-882707db888b?w=1920&q=80',
-    'https://images.unsplash.com/photo-1503803548695-c2a7b4a5b875?w=1920&q=80',
-    'https://images.unsplash.com/photo-1502139214982-d0ad755818d8?w=1920&q=80',
-    'https://images.unsplash.com/photo-1506891536236-3e07892564b7?w=1920&q=80',
-    'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1920&q=80',
-    'https://images.unsplash.com/photo-1485988412941-77a35537dae4?w=1920&q=80',
-    'https://images.unsplash.com/photo-1432821596592-e2c18b78144f?w=1920&q=80',
-    'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=1920&q=80',
-    'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=1920&q=80',
-    'https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=1920&q=80',
-    'https://images.unsplash.com/photo-1509114397022-ed747cca3f65?w=1920&q=80',
-    'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?w=1920&q=80',
-    'https://images.unsplash.com/photo-1515630278258-407f66498911?w=1920&q=80',
-    'https://images.unsplash.com/photo-1491466424936-e304919aada7?w=1920&q=80'
-];
-
+// js/app.js - Complete page by page app
 // ==================== STATE ====================
 let Nexus = {
     state: {
@@ -90,58 +17,86 @@ let Nexus = {
 
     // ==================== INIT ====================
     init() {
+        // Check if user is logged in
         const savedUser = Storage.getUser();
-        if (!savedUser) {
-            window.location.href = 'index.html';
-            return;
+        if (savedUser) {
+            this.state.user = savedUser;
+            this.loadAllData();
+            this.setBg(this.state.wallpaper);
+            this.navigate('social');
+        } else {
+            this.navigate('landing');
         }
 
-        this.state.user = savedUser;
-        this.loadAllData();
-        this.setBg(this.state.wallpaper);
+        // Set up event listeners
+        this.setupListeners();
+        
+        // Update online status periodically
+        setInterval(() => {
+            if (this.state.user) {
+                Storage.updateOnline(this.state.user.username);
+                const online = Storage.getOnline();
+                const onlineCount = document.getElementById('onlineCount');
+                if (onlineCount) {
+                    onlineCount.textContent = Object.keys(online).length;
+                }
+            }
+        }, 5000);
 
-        // Button listeners
+        console.log('⚡ Nexus ready');
+    },
+
+    setupListeners() {
+        // Aura buttons
         document.getElementById('btnConfirmAuras')?.addEventListener('click', () => this.confirmSelection());
+        
+        // Diary buttons
         document.getElementById('btnSaveDiary')?.addEventListener('click', () => this.saveDiary());
+        
+        // Routine buttons
         document.getElementById('btnSaveRoutine')?.addEventListener('click', () => this.saveRoutine());
+        
+        // Chat buttons
         document.getElementById('btnSendMessage')?.addEventListener('click', () => this.sendMessage());
-        document.getElementById('btnCreatePost')?.addEventListener('click', () => this.createPost());
-        document.getElementById('btnResetDay')?.addEventListener('click', () => this.resetDay());
-        document.getElementById('btnAuras')?.addEventListener('click', () => this.navigate('select'));
-        document.getElementById('btnRandomWallpaper')?.addEventListener('click', () => this.randomWallpaper());
-        document.getElementById('btnChangeUsername')?.addEventListener('click', () => this.changeUsername());
-        document.getElementById('btnEditProfile')?.addEventListener('click', () => this.editProfile());
-        document.getElementById('btnLogout')?.addEventListener('click', () => this.logout());
-
-        // Nav buttons
-        document.querySelectorAll('.nav-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.navigate(btn.dataset.page));
-        });
-
-        // Enter key for chat
         document.getElementById('chatInput')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendMessage();
         });
-
-        // Enter key for post
+        
+        // Post buttons
+        document.getElementById('btnCreatePost')?.addEventListener('click', () => this.createPost());
         document.getElementById('postInput')?.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 this.createPost();
             }
         });
-
-        // Load auras from profile
-        const profile = Storage.getProfile(this.state.user.id);
-        this.state.selectedAuras = profile.selectedAuras || [];
-        this.state.wallpaper = profile.wallpaper || this.state.wallpaper;
-        this.state.bio = profile.bio || 'Building my energy. One aura at a time. ⚡';
-
-        // Update online status
-        this.updateOnlineStatus();
-
-        this.navigate(this.state.selectedAuras.length ? 'social' : 'select');
-        console.log('⚡ Nexus ready');
+        
+        // Dashboard buttons
+        document.getElementById('btnResetDay')?.addEventListener('click', () => this.resetDay());
+        document.getElementById('btnAuras')?.addEventListener('click', () => this.navigate('select'));
+        
+        // Wallpaper buttons
+        document.getElementById('btnRandomWallpaper')?.addEventListener('click', () => this.randomWallpaper());
+        
+        // Profile buttons
+        document.getElementById('btnChangeUsername')?.addEventListener('click', () => this.changeUsername());
+        document.getElementById('btnEditProfile')?.addEventListener('click', () => this.editProfile());
+        document.getElementById('btnLogout')?.addEventListener('click', () => this.logout());
+        document.getElementById('btnProfileDashboard')?.addEventListener('click', () => this.navigate('dashboard'));
+        document.getElementById('btnProfileAuras')?.addEventListener('click', () => this.navigate('select'));
+        
+        // Nav buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => this.navigate(btn.dataset.page));
+        });
+        
+        // Wallpaper FAB
+        document.querySelector('.wp-fab')?.addEventListener('click', () => this.navigate('wallpapers'));
+        
+        // New post button
+        document.getElementById('btnNewPost')?.addEventListener('click', () => {
+            document.getElementById('postInput')?.focus();
+        });
     },
 
     // ==================== LOAD DATA ====================
@@ -152,23 +107,45 @@ let Nexus = {
         this.state.posts = Storage.getPosts();
         this.state.chatMessages = Storage.getChat();
         this.state.completedTasks = Storage.getTasks(userId) || [];
+        this.state.streakData = Storage.getStreaks(userId) || {};
 
         const profile = Storage.getProfile(userId);
         this.state.selectedAuras = profile.selectedAuras || [];
-        this.state.wallpaper = profile.wallpaper || this.state.wallpaper;
+        this.state.wallpaper = profile.wallpaper || UNSPLASH[0];
         this.state.bio = profile.bio || 'Building my energy. One aura at a time. ⚡';
     },
 
-    // ==================== ONLINE STATUS ====================
-    updateOnlineStatus() {
-        if (this.state.user) {
-            Storage.updateOnline(this.state.user.username);
-        }
-        const online = Storage.getOnline();
-        const onlineCount = document.getElementById('onlineCount');
-        if (onlineCount) {
-            onlineCount.textContent = Object.keys(online).length;
-        }
+    // ==================== NAVIGATION ====================
+    navigate(page) {
+        // Hide all pages
+        document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
+        
+        // Show target page
+        const target = document.getElementById('page-' + page);
+        if (target) target.classList.add('active');
+
+        // Update nav buttons
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            b.classList.remove('active');
+            if (b.dataset.page === page) b.classList.add('active');
+        });
+
+        // Show/hide bottom nav
+        const nav = document.getElementById('bottomNav');
+        const hideNav = ['landing', 'login', 'signup', 'select'];
+        if (nav) nav.style.display = hideNav.includes(page) ? 'none' : 'flex';
+
+        // Render page content
+        if (page === 'select') this.renderAuraGrid();
+        if (page === 'dashboard') this.renderDashboard();
+        if (page === 'diary') this.renderDiary();
+        if (page === 'routine') this.renderRoutines();
+        if (page === 'chat') this.renderChat();
+        if (page === 'social') { this.renderSocial(); this.renderStories(); }
+        if (page === 'profile') this.renderProfile();
+        if (page === 'wallpapers') this.renderWallpapers();
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     // ==================== TOAST ====================
@@ -185,75 +162,27 @@ let Nexus = {
 
     // ==================== BACKGROUND ====================
     setBg(url) {
+        if (!url) return;
         this.state.wallpaper = url;
-        const s = document.createElement('style');
-        s.textContent = `body::before{background-image:url('${url}')!important}`;
+        
+        // Remove existing bg style
         document.querySelector('style[data-bg]')?.remove();
+        
+        // Create new bg style
+        const s = document.createElement('style');
         s.setAttribute('data-bg', '');
+        s.textContent = `body::before{background-image:url('${url}')!important}`;
         document.head.appendChild(s);
-        Storage.setProfile(this.state.user.id, { ...Storage.getProfile(this.state.user.id), wallpaper: url });
-    },
-
-    // ==================== NAVIGATION ====================
-    navigate(page) {
-        document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-        const target = document.getElementById('page-' + page);
-        if (target) target.classList.add('active');
-
-        document.querySelectorAll('.nav-btn').forEach(b => {
-            b.classList.remove('active');
-            if (b.dataset.page === page) b.classList.add('active');
-        });
-
-        const nav = document.getElementById('bottomNav');
-        if (nav) nav.style.display = (page === 'select') ? 'none' : 'flex';
-
-        if (page === 'select') this.renderAuraGrid();
-        if (page === 'dashboard') this.renderDashboard();
-        if (page === 'diary') this.renderDiary();
-        if (page === 'routine') this.renderRoutines();
-        if (page === 'chat') this.renderChat();
-        if (page === 'social') this.renderSocial();
-        if (page === 'profile') this.renderProfile();
-        if (page === 'wallpapers') this.renderWallpapers();
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    },
-
-    // ==================== AURAS ====================
-    toggleAura(key) {
-        const idx = this.state.selectedAuras.indexOf(key);
-        if (idx > -1) this.state.selectedAuras.splice(idx, 1);
-        else if (this.state.selectedAuras.length < 3) this.state.selectedAuras.push(key);
-        this.renderAuraGrid();
-    },
-
-    renderAuraGrid() {
-        const grid = document.getElementById('auraGrid');
-        if (!grid) return;
-        grid.innerHTML = Object.entries(AURAS).map(([key, aura]) => {
-            const sel = this.state.selectedAuras.includes(key);
-            return `<div class="aura-btn${sel ? ' selected' : ''}" onclick="Nexus.toggleAura('${key}')">
-                <span class="emoji">${aura.emoji}</span>
-                <div class="info"><h3>${aura.name}</h3><p>${aura.desc}</p></div>
-                <span class="check-mark">✓</span>
-            </div>`;
-        }).join('');
-        const counter = document.getElementById('counter');
-        if (counter) counter.textContent = this.state.selectedAuras.length;
-    },
-
-    confirmSelection() {
-        if (!this.state.selectedAuras.length) {
-            this.toast('Select at least one');
-            return;
+        
+        // Save to profile
+        if (this.state.user) {
+            const profile = Storage.getProfile(this.state.user.id);
+            profile.wallpaper = url;
+            Storage.setProfile(this.state.user.id, profile);
         }
-        Storage.setProfile(this.state.user.id, { ...Storage.getProfile(this.state.user.id), selectedAuras: this.state.selectedAuras });
-        this.navigate('social');
-        this.toast('Auras activated');
     },
 
-    // ==================== DASHBOARD ====================
+    // ==================== GET TASKS ====================
     getTasks() {
         let tasks = [];
         this.state.selectedAuras.forEach(key => {
@@ -272,7 +201,7 @@ let Nexus = {
     calcStreak() {
         let s = 0;
         const now = new Date();
-        const streaks = Storage.getStreaks(this.state.user.id);
+        const streaks = this.state.streakData;
         for (let i = 0; i < 365; i++) {
             const d = new Date(now);
             d.setDate(d.getDate() - i);
@@ -283,6 +212,49 @@ let Nexus = {
         return s;
     },
 
+    // ==================== AURAS ====================
+    toggleAura(key) {
+        const idx = this.state.selectedAuras.indexOf(key);
+        if (idx > -1) {
+            this.state.selectedAuras.splice(idx, 1);
+        } else if (this.state.selectedAuras.length < 3) {
+            this.state.selectedAuras.push(key);
+        }
+        this.renderAuraGrid();
+    },
+
+    renderAuraGrid() {
+        const grid = document.getElementById('auraGrid');
+        if (!grid) return;
+        
+        grid.innerHTML = Object.entries(AURAS).map(([key, aura]) => {
+            const sel = this.state.selectedAuras.includes(key);
+            return `<div class="aura-btn${sel ? ' selected' : ''}" onclick="Nexus.toggleAura('${key}')">
+                <span class="emoji">${aura.emoji}</span>
+                <div class="info"><h3>${aura.name}</h3><p>${aura.desc}</p></div>
+                <span class="check-mark">✓</span>
+            </div>`;
+        }).join('');
+        
+        const counter = document.getElementById('counter');
+        if (counter) counter.textContent = this.state.selectedAuras.length;
+    },
+
+    confirmSelection() {
+        if (!this.state.selectedAuras.length) {
+            this.toast('Select at least one aura');
+            return;
+        }
+        
+        const profile = Storage.getProfile(this.state.user.id);
+        profile.selectedAuras = this.state.selectedAuras;
+        Storage.setProfile(this.state.user.id, profile);
+        
+        this.toast('Auras activated ✨');
+        this.navigate('social');
+    },
+
+    // ==================== DASHBOARD ====================
     renderDashboard() {
         if (!this.state.selectedAuras.length) {
             this.navigate('select');
@@ -339,13 +311,13 @@ let Nexus = {
         const total = tasks.length;
         const done = this.state.completedTasks.filter(i => i < total).length;
         const today = new Date().toDateString();
-        const streaks = Storage.getStreaks(this.state.user.id);
+        
         if (done === total && total > 0) {
-            streaks[today] = true;
+            this.state.streakData[today] = true;
         } else {
-            delete streaks[today];
+            delete this.state.streakData[today];
         }
-        Storage.setStreaks(this.state.user.id, streaks);
+        Storage.setStreaks(this.state.user.id, this.state.streakData);
         this.renderDashboard();
     },
 
@@ -354,9 +326,8 @@ let Nexus = {
         this.state.completedTasks = [];
         Storage.setTasks(this.state.user.id, []);
         const today = new Date().toDateString();
-        const streaks = Storage.getStreaks(this.state.user.id);
-        delete streaks[today];
-        Storage.setStreaks(this.state.user.id, streaks);
+        delete this.state.streakData[today];
+        Storage.setStreaks(this.state.user.id, this.state.streakData);
         this.renderDashboard();
     },
 
@@ -366,18 +337,21 @@ let Nexus = {
             m = now.getMonth(),
             dim = new Date(y, m + 1, 0).getDate(),
             fd = new Date(y, m, 1).getDay();
+        
         const monthLabel = document.getElementById('monthLabel');
         if (monthLabel) monthLabel.textContent = now.toLocaleDateString('en', { month: 'long', year: 'numeric' });
 
         const cal = document.getElementById('calendar');
         if (!cal) return;
         cal.innerHTML = '';
+        
         ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].forEach(d => {
             const div = document.createElement('div');
             div.className = 'cal-day weekday';
             div.textContent = d;
             cal.appendChild(div);
         });
+        
         for (let i = 0; i < fd; i++) {
             const div = document.createElement('div');
             div.className = 'cal-day';
@@ -385,18 +359,22 @@ let Nexus = {
             cal.appendChild(div);
         }
 
-        const streaks = Storage.getStreaks(this.state.user.id);
+        const streaks = this.state.streakData;
         for (let d = 1; d <= dim; d++) {
             const ds = new Date(y, m, d).toDateString();
             const div = document.createElement('div');
             div.className = 'cal-day';
             div.textContent = d;
+            
             if (streaks[ds]) {
                 div.classList.add('active');
                 const pa = AURAS[this.state.selectedAuras[0]];
                 if (pa) div.style.background = pa.accent;
             }
-            if (d === now.getDate() && m === now.getMonth() && y === now.getFullYear()) div.classList.add('today');
+            
+            if (d === now.getDate() && m === now.getMonth() && y === now.getFullYear()) {
+                div.classList.add('today');
+            }
             cal.appendChild(div);
         }
     },
@@ -419,6 +397,7 @@ let Nexus = {
 
         this.state.diary.unshift(entry);
         Storage.setDiary(this.state.user.id, this.state.diary);
+        
         document.getElementById('diaryInput').value = '';
         document.getElementById('diaryMood').value = '';
         this.renderDiary();
@@ -476,6 +455,7 @@ let Nexus = {
 
         this.state.routines.unshift(routine);
         Storage.setRoutines(this.state.user.id, this.state.routines);
+        
         document.getElementById('routineTitle').value = '';
         document.getElementById('routineInput').value = '';
         this.renderRoutines();
@@ -511,7 +491,10 @@ let Nexus = {
     sendMessage() {
         const input = document.getElementById('chatInput');
         const text = input.value.trim();
-        if (!text || !this.state.user) return;
+        if (!text || !this.state.user) {
+            this.toast('Please log in');
+            return;
+        }
 
         const message = {
             id: 'msg_' + Date.now(),
@@ -525,14 +508,21 @@ let Nexus = {
         Storage.setChat(this.state.chatMessages);
         input.value = '';
         this.renderChatMessages();
-        this.updateOnlineStatus();
+        
+        // Update online status
+        Storage.updateOnline(this.state.user.username);
     },
 
     renderChat() {
         document.getElementById('myUsername').textContent = this.state.user?.username || '—';
         this.renderChatMessages();
-        this.updateOnlineStatus();
-        setInterval(() => this.updateOnlineStatus(), 5000);
+        
+        // Update online count
+        const online = Storage.getOnline();
+        const onlineCount = document.getElementById('onlineCount');
+        if (onlineCount) {
+            onlineCount.textContent = Object.keys(online).length;
+        }
     },
 
     renderChatMessages() {
@@ -587,6 +577,24 @@ let Nexus = {
         }
     },
 
+    // ==================== STORIES ====================
+    renderStories() {
+        const row = document.getElementById('storyRow');
+        if (!row) return;
+        
+        const users = [...new Set(this.state.posts.map(p => p.author))];
+        if (users.length === 0) {
+            row.innerHTML = '<div style="display:flex;gap:10px;padding:4px 0;color:#94a3b8;font-size:12px;">No stories yet</div>';
+            return;
+        }
+        
+        row.innerHTML = users.slice(0, 10).map(u => {
+            const post = this.state.posts.find(p => p.author === u);
+            const emoji = post ? post.avatar : '😊';
+            return `<div class="ig-story"><div class="ig-story-avatar"><div class="inner">${emoji}</div></div><span class="ig-story-name">${u}</span></div>`;
+        }).join('');
+    },
+
     // ==================== SOCIAL FEED ====================
     createPost() {
         const input = document.getElementById('postInput');
@@ -596,7 +604,8 @@ let Nexus = {
             return;
         }
 
-        const avatar = this.state.selectedAuras.length ? this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
+        const avatar = this.state.selectedAuras.length ? 
+            this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
         const randImg = UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)];
 
         const post = {
@@ -614,6 +623,7 @@ let Nexus = {
         Storage.setPosts(this.state.posts);
         input.value = '';
         this.renderSocial();
+        this.renderStories();
         this.toast('Posted! ✨');
     },
 
@@ -621,9 +631,9 @@ let Nexus = {
         const post = this.state.posts.find(p => p.id === postId);
         if (!post) return;
 
-        const liked = post.likes.includes(this.state.user.id);
-        if (liked) {
-            post.likes = post.likes.filter(id => id !== this.state.user.id);
+        const idx = post.likes.indexOf(this.state.user.id);
+        if (idx > -1) {
+            post.likes.splice(idx, 1);
         } else {
             post.likes.push(this.state.user.id);
         }
@@ -636,6 +646,7 @@ let Nexus = {
         this.state.posts = this.state.posts.filter(p => p.id !== postId);
         Storage.setPosts(this.state.posts);
         this.renderSocial();
+        this.renderStories();
     },
 
     timeSince(date) {
@@ -654,7 +665,8 @@ let Nexus = {
 
         const avatarEl = document.getElementById('postAvatarEmoji');
         if (avatarEl) {
-            avatarEl.textContent = this.state.selectedAuras.length ? this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
+            avatarEl.textContent = this.state.selectedAuras.length ? 
+                this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
         }
 
         const posts = this.state.posts;
@@ -698,14 +710,17 @@ let Nexus = {
         const newBio = prompt('Edit your bio:', this.state.bio || '');
         if (newBio !== null) {
             this.state.bio = newBio.trim() || 'Building my energy. One aura at a time. ⚡';
-            Storage.setProfile(this.state.user.id, { ...Storage.getProfile(this.state.user.id), bio: this.state.bio });
+            const profile = Storage.getProfile(this.state.user.id);
+            profile.bio = this.state.bio;
+            Storage.setProfile(this.state.user.id, profile);
             this.renderProfile();
             this.toast('Bio updated');
         }
     },
 
     renderProfile() {
-        const avatarEmoji = this.state.selectedAuras.length ? this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
+        const avatarEmoji = this.state.selectedAuras.length ? 
+            this.state.selectedAuras.map(k => AURAS[k].emoji).join('') : '😊';
 
         document.getElementById('profileAvatarEmoji').textContent = avatarEmoji;
         document.getElementById('profileName').textContent = this.state.user?.username || '—';
@@ -730,7 +745,6 @@ let Nexus = {
 
     // ==================== WALLPAPERS ====================
     setWallpaper(url) {
-        this.state.wallpaper = url;
         this.setBg(url);
         this.renderWallpapers();
         this.toast('Applied');
@@ -741,9 +755,12 @@ let Nexus = {
     },
 
     renderWallpapers() {
-        document.getElementById('wpCount').textContent = UNSPLASH.length + '+ wallpapers';
+        const wpCount = document.getElementById('wpCount');
+        if (wpCount) wpCount.textContent = UNSPLASH.length + '+ wallpapers';
+        
         const grid = document.getElementById('wpGrid');
         if (!grid) return;
+        
         grid.innerHTML = UNSPLASH.map(url => {
             const selected = this.state.wallpaper === url;
             return `<div class="wp-thumb${selected ? ' selected' : ''}" style="background-image:url('${url}')" onclick="Nexus.setWallpaper('${url}')"></div>`;
@@ -754,10 +771,11 @@ let Nexus = {
     logout() {
         if (!confirm('Logout?')) return;
         Storage.remove('nexus_user');
-        window.location.href = 'index.html';
+        window.location.reload();
     }
 };
 
+// ==================== INITIALIZE ====================
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => Nexus.init());
 } else {
