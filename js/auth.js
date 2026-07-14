@@ -1,92 +1,93 @@
-// js/auth.js - COMPLETE FIXED
-(function() {
-  const page = window.location.pathname.split('/').pop();
-
-  function toast(msg) {
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    const container = document.getElementById('toastContainer');
-    if (container) { 
-      container.appendChild(t); 
-      setTimeout(() => t.remove(), 2200); 
-    }
-  }
-
-  function showError(id, msg) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.textContent = msg;
-    el.style.display = 'block';
-    setTimeout(() => el.style.display = 'none', 5000);
-  }
-
-  if (page === 'signup.html') {
-    const btnSignup = document.getElementById('btnSignup');
-    if (btnSignup) {
-      btnSignup.addEventListener('click', async function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('signupUsername').value.trim();
-        const password = document.getElementById('signupPassword').value;
-        const confirm = document.getElementById('signupConfirm').value;
-
-        if (!username || !password) { 
-          showError('signupError', 'All fields required'); 
-          return; 
-        }
-        if (password !== confirm) { 
-          showError('signupError', 'Passwords do not match'); 
-          return; 
-        }
-        if (password.length < 4) { 
-          showError('signupError', 'Password must be at least 4 characters'); 
-          return; 
-        }
-
+# Create auth.js
+echo "// js/auth.js - Auth Logic
+const Auth = {
+    loadAuth() {
         try {
-          const result = await API.signup(username, password);
-          if (result.success) {
-            Storage.setUser(result.user);
-            toast('Account created! ✨');
-            setTimeout(() => window.location.href = 'app.html', 500);
-          }
-        } catch (error) {
-          showError('signupError', error.message);
+            const raw = localStorage.getItem('nexus_auth');
+            if (raw) {
+                const data = JSON.parse(raw);
+                if (data && data.username) {
+                    Nexus.state.username = data.username;
+                    const userData = JSON.parse(localStorage.getItem('nexus_data_' + data.username) || '{}');
+                    Object.assign(Nexus.state, userData);
+                    return true;
+                }
+            }
+        } catch (e) {}
+        return false;
+    },
+
+    saveAuth() {
+        localStorage.setItem('nexus_auth', JSON.stringify({ username: Nexus.state.username }));
+        localStorage.setItem('nexus_data_' + Nexus.state.username, JSON.stringify({
+            selectedAuras: Nexus.state.selectedAuras,
+            completedTasks: Nexus.state.completedTasks,
+            streakData: Nexus.state.streakData,
+            wallpaper: Nexus.state.wallpaper,
+            diary: Nexus.state.diary,
+            routines: Nexus.state.routines,
+            posts: Nexus.state.posts,
+            likedPosts: Nexus.state.likedPosts,
+            bio: Nexus.state.bio
+        }));
+    },
+
+    handleSignup() {
+        const name = document.getElementById('signupName').value.trim();
+        const user = document.getElementById('signupUser').value.trim();
+        const pass = document.getElementById('signupPass').value.trim();
+        if (!name || !user || !pass) {
+            Nexus.toast('Please fill all fields');
+            return;
         }
-      });
+        const users = JSON.parse(localStorage.getItem('nexus_users') || '{}');
+        if (users[user]) {
+            Nexus.toast('Username already exists');
+            return;
+        }
+        users[user] = { name, password: pass, created: Date.now() };
+        localStorage.setItem('nexus_users', JSON.stringify(users));
+        Nexus.state.username = user;
+        Nexus.state.selectedAuras = [];
+        Nexus.state.completedTasks = [];
+        Nexus.state.streakData = {};
+        Nexus.state.diary = [];
+        Nexus.state.routines = [];
+        Nexus.state.posts = [];
+        Nexus.state.likedPosts = [];
+        Nexus.state.bio = 'Building my energy. One aura at a time. ⚡';
+        this.saveAuth();
+        Nexus.toast('Account created! Welcome ' + name);
+        Nexus.navigate('select');
+    },
+
+    handleLogin() {
+        const user = document.getElementById('loginUser').value.trim();
+        const pass = document.getElementById('loginPass').value.trim();
+        if (!user || !pass) {
+            Nexus.toast('Enter username and password');
+            return;
+        }
+        const users = JSON.parse(localStorage.getItem('nexus_users') || '{}');
+        if (!users[user] || users[user].password !== pass) {
+            Nexus.toast('Invalid credentials');
+            return;
+        }
+        Nexus.state.username = user;
+        const userData = JSON.parse(localStorage.getItem('nexus_data_' + user) || '{}');
+        Object.assign(Nexus.state, userData);
+        Nexus.state.chatMessages = Storage.getChat();
+        this.saveAuth();
+        Nexus.setBg(Nexus.state.wallpaper);
+        Nexus.toast('Welcome back, ' + users[user].name);
+        Nexus.navigate('social');
+    },
+
+    logout() {
+        if (!confirm('Logout?')) return;
+        Nexus.state.username = '';
+        localStorage.removeItem('nexus_auth');
+        Nexus.toast('Logged out');
+        Nexus.navigate('landing');
     }
-  }
-
-  if (page === 'login.html') {
-    const btnLogin = document.getElementById('btnLogin');
-    if (btnLogin) {
-      btnLogin.addEventListener('click', async function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('loginUsername').value.trim();
-        const password = document.getElementById('loginPassword').value;
-
-        if (!username || !password) { 
-          showError('loginError', 'All fields required'); 
-          return; 
-        }
-
-        try {
-          const result = await API.login(username, password);
-          if (result.success) {
-            Storage.setUser(result.user);
-            toast('Welcome back! 👋');
-            setTimeout(() => window.location.href = 'app.html', 500);
-          }
-        } catch (error) {
-          showError('loginError', error.message);
-        }
-      });
-    }
-  }
-
-  if ((page === 'login.html' || page === 'signup.html') && Storage.getUser()) {
-    window.location.href = 'app.html';
-  }
-})();
+};" > js/auth.js

@@ -1,124 +1,40 @@
-// js/diary.js - COMPLETE
-Nexus.saveDiary = async function() {
-  const content = document.getElementById('diaryInput').value.trim();
-  const mood = document.getElementById('diaryMood').value.trim() || '—';
-  if (!content) { Nexus.toast('Write something'); return; }
+# Create diary.js
+echo "// js/diary.js - Diary Logic
+const Diary = {
+    saveDiary() {
+        const content = document.getElementById('diaryInput').value.trim();
+        const mood = document.getElementById('diaryMood').value.trim() || '—';
+        if (!content) {
+            Nexus.toast('Write something');
+            return;
+        }
+        Nexus.state.diary.unshift({ date: new Date().toISOString(), content: content, mood: mood });
+        Auth.saveAuth();
+        document.getElementById('diaryInput').value = '';
+        document.getElementById('diaryMood').value = '';
+        this.render();
+        Nexus.toast('📝 Saved');
+    },
 
-  const entry = { 
-    id: Date.now().toString(), 
-    content, 
-    mood, 
-    createdAt: new Date().toISOString() 
-  };
+    deleteDiary(index) {
+        Nexus.state.diary.splice(index, 1);
+        Auth.saveAuth();
+        this.render();
+    },
 
-  Nexus.state.diary.unshift(entry);
-  Nexus.saveLocalData();
-
-  if (Nexus.state.online) {
-    try {
-      const { error } = await supabase
-        .from('diary_entries')
-        .insert({
-          user_id: Nexus.state.user.id,
-          content: content,
-          mood: mood,
-          created_at: entry.createdAt
-        });
-      
-      if (error) throw error;
-      Nexus.toast('💾 Saved!');
-    } catch (error) {
-      console.error('Failed to save diary to cloud:', error);
-      const offline = JSON.parse(localStorage.getItem('offline_diary') || '[]');
-      offline.push(entry);
-      localStorage.setItem('offline_diary', JSON.stringify(offline));
-      Nexus.toast('💾 Saved locally (will sync when online)');
+    render() {
+        const container = document.getElementById('diaryEntries');
+        if (!container) return;
+        const search = (document.getElementById('diarySearch')?.value || '').toLowerCase();
+        let entries = Nexus.state.diary;
+        if (search) entries = entries.filter(x => x.content.toLowerCase().includes(search));
+        if (entries.length === 0) {
+            container.innerHTML = '<p style=\"color:#94a3b8;text-align:center;\">' + (search ? 'No matches.' : 'No entries yet.') + '</p>';
+            return;
+        }
+        container.innerHTML = entries.map((x, i) => {
+            const idx = Nexus.state.diary.indexOf(x);
+            return '<div class=\"entry-card\"><div style=\"display:flex;justify-content:space-between;margin-bottom:3px;\"><small style=\"color:#94a3b8;\">' + new Date(x.date).toLocaleDateString() + '</small><span style=\"font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;\">' + x.mood + '</span></div><p style=\"font-size:12px;white-space:pre-wrap;\">' + x.content + '</p><button class=\"btn-sm btn-danger\" onclick=\"Nexus.deleteDiary(' + idx + ')\" style=\"margin-top:5px;\">🗑️</button></div>';
+        }).join('');
     }
-  } else {
-    const offline = JSON.parse(localStorage.getItem('offline_diary') || '[]');
-    offline.push(entry);
-    localStorage.setItem('offline_diary', JSON.stringify(offline));
-    Nexus.toast('💾 Saved offline');
-  }
-
-  document.getElementById('diaryInput').value = '';
-  document.getElementById('diaryMood').value = '';
-  Nexus.renderDiary();
-};
-
-Nexus.deleteDiary = async function(id) {
-  Nexus.state.diary = Nexus.state.diary.filter(e => e.id !== id);
-  Nexus.saveLocalData();
-  
-  if (Nexus.state.online) {
-    try {
-      await supabase
-        .from('diary_entries')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', Nexus.state.user.id);
-    } catch (error) {
-      console.error('Failed to delete diary entry:', error);
-    }
-  }
-  
-  Nexus.renderDiary();
-};
-
-Nexus.loadDiary = async function() {
-  if (!Nexus.state.online) return;
-  try {
-    const { data, error } = await supabase
-      .from('diary_entries')
-      .select('*')
-      .eq('user_id', Nexus.state.user.id)
-      .order('created_at', { ascending: false });
-    
-    if (error) throw error;
-    
-    if (data && data.length) {
-      Nexus.state.diary = data.map(entry => ({
-        id: entry.id,
-        content: entry.content,
-        mood: entry.mood || '—',
-        createdAt: entry.created_at
-      }));
-      Nexus.saveLocalData();
-    }
-  } catch (error) {
-    console.error('Failed to load diary:', error);
-  }
-};
-
-Nexus.renderDiary = function() {
-  const container = document.getElementById('diaryEntries');
-  if (!container) return;
-  
-  const search = (document.getElementById('diarySearch')?.value || '').toLowerCase();
-  let entries = Nexus.state.diary;
-  
-  if (search) {
-    entries = entries.filter(e => 
-      e.content.toLowerCase().includes(search) || 
-      e.mood.toLowerCase().includes(search)
-    );
-  }
-  
-  if (!entries.length) {
-    container.innerHTML = '<p style="color:#94a3b8;text-align:center;">' + 
-      (search ? '🔍 No matches.' : '📝 No entries yet. Start writing!') + 
-      '</p>';
-    return;
-  }
-  
-  container.innerHTML = entries.map(e => `
-    <div class="entry-card">
-      <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-        <small style="color:#94a3b8;">${new Date(e.createdAt).toLocaleDateString()} ${new Date(e.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</small>
-        <span style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;">${escapeHtml(e.mood)}</span>
-      </div>
-      <p style="font-size:13px;white-space:pre-wrap;word-break:break-word;">${escapeHtml(e.content)}</p>
-      <button class="btn-sm btn-danger" onclick="Nexus.deleteDiary('${e.id}')" style="margin-top:5px;">🗑️</button>
-    </div>
-  `).join('');
-};
+};" > js/diary.js

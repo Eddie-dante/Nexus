@@ -11,7 +11,7 @@
     <button class="wp-fab" onclick="Nexus.navigate('wallpapers')">🎨</button>
     <div id="toastContainer"></div>
 
-    <!-- ========== PAGE: LANDING ========== -->
+    <!-- ===== PAGE: LANDING ===== -->
     <div class="page active" id="page-landing">
         <div class="container landing-content">
             <span class="landing-icon">⚡</span>
@@ -22,43 +22,43 @@
         </div>
     </div>
 
-    <!-- ========== PAGE: SIGNUP ========== -->
+    <!-- ===== PAGE: SIGNUP ===== -->
     <div class="page" id="page-signup">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:16px;">✨ Create Account</h2>
             <input type="text" id="signupName" placeholder="Full name" style="margin-bottom:8px;">
             <input type="text" id="signupUser" placeholder="Username" style="margin-bottom:8px;">
             <input type="password" id="signupPass" placeholder="Password" style="margin-bottom:16px;">
-            <button class="btn-primary" onclick="handleSignup()">Sign Up</button>
+            <button class="btn-primary" onclick="Nexus.handleSignup()">Sign Up</button>
             <div class="auth-toggle" onclick="Nexus.navigate('login')">Already have an account? Log in</div>
             <button class="btn-secondary" onclick="Nexus.navigate('landing')" style="margin-top:8px;">← Back</button>
         </div>
     </div>
 
-    <!-- ========== PAGE: LOGIN ========== -->
+    <!-- ===== PAGE: LOGIN ===== -->
     <div class="page" id="page-login">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:16px;">🔐 Sign In</h2>
             <input type="text" id="loginUser" placeholder="Username" style="margin-bottom:8px;">
             <input type="password" id="loginPass" placeholder="Password" style="margin-bottom:16px;">
-            <button class="btn-primary" onclick="handleLogin()">Log In</button>
+            <button class="btn-primary" onclick="Nexus.handleLogin()">Log In</button>
             <div class="auth-toggle" onclick="Nexus.navigate('signup')">No account? Create one</div>
             <button class="btn-secondary" onclick="Nexus.navigate('landing')" style="margin-top:8px;">← Back</button>
         </div>
     </div>
 
-    <!-- ========== PAGE: AURA SELECTION ========== -->
+    <!-- ===== PAGE: AURA SELECTION ===== -->
     <div class="page" id="page-select">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:3px;">Choose Your Auras</h2>
             <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Select up to 3 energies</p>
             <div class="counter-chip"><span>✧</span> <strong id="counter">0</strong><span>/3</span></div>
             <div class="aura-grid" id="auraGrid"></div>
-            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;">Continue →</button>
+            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;" onclick="Nexus.confirmSelection()">Continue →</button>
         </div>
     </div>
 
-    <!-- ========== PAGE: DASHBOARD ========== -->
+    <!-- ===== PAGE: DASHBOARD ===== -->
     <div class="page" id="page-dashboard">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -89,42 +89,42 @@
                 <div class="cal-grid" id="calendar"></div>
             </div>
             <div style="display:flex;gap:6px;margin-top:8px;">
-                <button class="btn-sm" id="btnResetDay">↺ Reset</button>
-                <button class="btn-sm" id="btnAuras">✧ Auras</button>
+                <button class="btn-sm" id="btnResetDay" onclick="Nexus.resetDay()">↺ Reset</button>
+                <button class="btn-sm" id="btnAuras" onclick="Nexus.navigate('select')">✧ Auras</button>
             </div>
         </div>
     </div>
 
-    <!-- ========== PAGE: DIARY ========== -->
+    <!-- ===== PAGE: DIARY ===== -->
     <div class="page" id="page-diary">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📖 Diary</h2>
             <textarea id="diaryInput" rows="3" placeholder="Dear diary..."></textarea>
             <div style="display:flex;gap:6px;margin-top:6px;">
                 <input type="text" id="diaryMood" placeholder="Mood" style="flex:1;">
-                <button class="btn-sm btn-primary" id="btnSaveDiary" style="width:auto;">💾</button>
+                <button class="btn-sm btn-primary" id="btnSaveDiary" onclick="Nexus.saveDiary()" style="width:auto;">💾</button>
             </div>
             <input type="search" id="diarySearch" placeholder="🔍 Search..." oninput="Nexus.renderDiary()" style="margin-top:8px;">
             <div id="diaryEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
-                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+                <p style="color:#94a3b8;text-align:center;">No entries yet.</p>
             </div>
         </div>
     </div>
 
-    <!-- ========== PAGE: ROUTINE ========== -->
+    <!-- ===== PAGE: ROUTINE ===== -->
     <div class="page" id="page-routine">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📋 Routines</h2>
             <input type="text" id="routineTitle" placeholder="Title...">
             <textarea id="routineInput" rows="2" placeholder="Description..." style="margin-top:6px;"></textarea>
-            <button class="btn-sm btn-primary" id="btnSaveRoutine" style="margin-top:6px;width:100%;">💾 Save</button>
+            <button class="btn-sm btn-primary" id="btnSaveRoutine" onclick="Nexus.saveRoutine()" style="margin-top:6px;width:100%;">💾 Save</button>
             <div id="routineEntries" style="max-height:320px;overflow-y:auto;margin-top:8px;">
-                <p style="color:#94a3b8;text-align:center;">Loading...</p>
+                <p style="color:#94a3b8;text-align:center;">No routines yet.</p>
             </div>
         </div>
     </div>
 
-    <!-- ========== PAGE: CHAT ========== -->
+    <!-- ===== PAGE: CHAT ===== -->
     <div class="page" id="page-chat">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -133,26 +133,26 @@
             </div>
             <div style="font-size:11px;color:#64748b;margin-bottom:6px;">
                 You: <strong id="myUsername">—</strong>
-                <button class="btn-sm" id="btnChangeUsername" style="margin-left:6px;font-size:10px;">✏️</button>
+                <button class="btn-sm" id="btnChangeUsername" onclick="Nexus.changeUsername()" style="margin-left:6px;font-size:10px;">✏️</button>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <p style="color:#94a3b8;text-align:center;">Loading...</p>
             </div>
             <div style="display:flex;gap:6px;">
-                <input type="text" id="chatInput" placeholder="Message..." style="flex:1;">
-                <button class="btn-sm btn-primary" id="btnSendMessage" style="width:auto;">📤</button>
+                <input type="text" id="chatInput" placeholder="Message..." onkeypress="if(event.key==='Enter')Nexus.sendMessage()" style="flex:1;">
+                <button class="btn-sm btn-primary" id="btnSendMessage" onclick="Nexus.sendMessage()" style="width:auto;">📤</button>
             </div>
         </div>
     </div>
 
-    <!-- ========== PAGE: SOCIAL FEED ========== -->
+    <!-- ===== PAGE: SOCIAL FEED ===== -->
     <div class="page" id="page-social">
         <div class="container" style="padding: 16px 14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
                 <h2 style="font-size:20px;font-weight:700;">Nexus</h2>
                 <div style="display:flex;gap:12px;align-items:center;">
-                    <button class="btn-sm" id="btnWalls" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="Wallpapers">🎨</button>
-                    <button class="btn-sm" id="btnNewPost" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="New Post">➕</button>
+                    <button class="btn-sm" onclick="Nexus.navigate('wallpapers')" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="Wallpapers">🎨</button>
+                    <button class="btn-sm" onclick="document.getElementById('postInput').focus()" style="font-size:16px;background:none;border:none;padding:4px;cursor:pointer;" title="New Post">➕</button>
                 </div>
             </div>
             <div class="ig-story-row" id="storyRow"></div>
@@ -162,16 +162,16 @@
                         <span id="postAvatarEmoji">😊</span>
                     </div>
                     <input type="text" id="postInput" placeholder="What's on your mind?" style="flex:1;border:none;background:transparent;padding:6px 0;font-size:13px;outline:none;">
-                    <button class="btn-sm btn-primary" id="btnCreatePost" style="width:auto;padding:6px 14px;font-size:12px;">Post</button>
+                    <button class="btn-sm btn-primary" id="btnCreatePost" onclick="Nexus.createPost()" style="width:auto;padding:6px 14px;font-size:12px;">Post</button>
                 </div>
             </div>
             <div id="socialFeed" style="max-height:520px;overflow-y:auto;padding-bottom:10px;">
-                <p style="color:#94a3b8;text-align:center;padding:30px 0;">Loading...</p>
+                <p style="color:#94a3b8;text-align:center;padding:30px 0;">No posts yet. Share something!</p>
             </div>
         </div>
     </div>
 
-    <!-- ========== PAGE: PROFILE ========== -->
+    <!-- ===== PAGE: PROFILE ===== -->
     <div class="page" id="page-profile">
         <div class="container">
             <div class="profile-header">
@@ -184,12 +184,12 @@
                     <div class="profile-stat"><div class="num" id="profileFollowing">0</div><div class="label">Following</div></div>
                 </div>
                 <div class="profile-bio" id="profileBio">Building my energy. One aura at a time. ⚡</div>
-                <button class="profile-edit-btn" id="btnEditProfile">✏️ Edit Profile</button>
-                <button class="profile-edit-btn" id="btnLogout" style="margin-top:6px;color:#ef4444;border-color:#ef4444;">🚪 Logout</button>
+                <button class="profile-edit-btn" id="btnEditProfile" onclick="Nexus.editProfile()">✏️ Edit Profile</button>
+                <button class="profile-edit-btn" id="btnLogout" onclick="Nexus.logout()" style="margin-top:6px;color:#ef4444;border-color:#ef4444;">🚪 Logout</button>
             </div>
             <div style="display:flex;gap:8px;margin-bottom:12px;">
-                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileDashboard">📊 Dashboard</button>
-                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" id="btnProfileAuras">✧ Auras</button>
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" onclick="Nexus.navigate('dashboard')">📊 Dashboard</button>
+                <button class="btn-sm" style="flex:1;background:rgba(0,0,0,0.05);" onclick="Nexus.navigate('select')">✧ Auras</button>
             </div>
             <h3 style="font-size:14px;font-weight:600;margin-bottom:8px;">📸 Your Posts</h3>
             <div id="profilePostsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;">
@@ -198,31 +198,38 @@
         </div>
     </div>
 
-    <!-- ========== PAGE: WALLPAPERS ========== -->
+    <!-- ===== PAGE: WALLPAPERS ===== -->
     <div class="page" id="page-wallpapers">
         <div class="container">
-            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Wallpapers</h2>
-            <button class="btn-sm" id="btnRandomWallpaper" style="width:100%;margin-bottom:8px;">🎲 Random Wallpaper</button>
-            <p style="font-size:10px;color:#94a3b8;" id="wpCount">0+ wallpapers</p>
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Walls</h2>
+            <button class="btn-sm" id="btnRandomWallpaper" onclick="Nexus.randomWallpaper()" style="width:100%;margin-bottom:8px;">🎲 Random</button>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">50+ wallpapers</p>
             <div class="wp-grid" id="wpGrid"></div>
         </div>
     </div>
 
-    <!-- ========== BOTTOM NAVIGATION ========== -->
-    <nav class="bottom-nav" id="bottomNav">
-        <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
-        <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
-        <button class="nav-btn" data-page="diary"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
-        <button class="nav-btn" data-page="routine"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
-        <button class="nav-btn" data-page="chat"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
-        <button class="nav-btn" data-page="wallpapers"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
-        <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
+    <!-- ===== BOTTOM NAVIGATION ===== -->
+    <nav class="bottom-nav" id="bottomNav" style="display:none;">
+        <button class="nav-btn active" data-page="social" onclick="Nexus.navigate('social')"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
+        <button class="nav-btn" data-page="dashboard" onclick="Nexus.navigate('dashboard')"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
+        <button class="nav-btn" data-page="diary" onclick="Nexus.navigate('diary')"><span class="nav-icon">📖</span><span class="nav-label">Diary</span></button>
+        <button class="nav-btn" data-page="routine" onclick="Nexus.navigate('routine')"><span class="nav-icon">📋</span><span class="nav-label">Routine</span></button>
+        <button class="nav-btn" data-page="chat" onclick="Nexus.navigate('chat')"><span class="nav-icon">💬</span><span class="nav-label">Chat</span></button>
+        <button class="nav-btn" data-page="wallpapers" onclick="Nexus.navigate('wallpapers')"><span class="nav-icon">🎨</span><span class="nav-label">Walls</span></button>
+        <button class="nav-btn" data-page="profile" onclick="Nexus.navigate('profile')"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
     </nav>
 
-    <!-- ========== SCRIPTS ========== -->
+    <!-- ===== SCRIPTS ===== -->
     <script src="js/storage.js"></script>
     <script src="js/auras.js"></script>
     <script src="js/wallpapers.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/diary.js"></script>
+    <script src="js/routine.js"></script>
+    <script src="js/chat.js"></script>
+    <script src="js/social.js"></script>
+    <script src="js/profile.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

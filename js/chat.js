@@ -1,109 +1,83 @@
-// js/chat.js - COMPLETE
-Nexus.initChat = function() {
-  if (Nexus.state.chatChannel) {
-    supabase.removeChannel(Nexus.state.chatChannel);
-  }
-  
-  Nexus.state.chatChannel = supabase
-    .channel('chat_channel')
-    .on('postgres_changes', 
-      { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'chat_messages' 
-      },
-      (payload) => {
-        Nexus.addChatMessage(payload.new);
-      }
-    )
-    .subscribe();
-};
+# Create chat.js
+echo "// js/chat.js - Chat Logic
+const Chat = {
+    startPoll() {
+        this.stopPoll();
+        this.poll = setInterval(() => {
+            const nm = Storage.getChat();
+            if (JSON.stringify(nm) !== JSON.stringify(Nexus.state.chatMessages)) {
+                Nexus.state.chatMessages = nm;
+                this.renderMessages();
+            }
+            Nexus.updateOnline();
+        }, 1000);
+    },
 
-Nexus.sendMessage = async function() {
-  const input = document.getElementById('chatInput');
-  const text = input.value.trim();
-  if (!text || !Nexus.state.user) return;
+    stopPoll() {
+        if (this.poll) {
+            clearInterval(this.poll);
+            this.poll = null;
+        }
+    },
 
-  try {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .insert({
-        user_id: Nexus.state.user.id,
-        username: Nexus.state.user.username,
-        content: text,
-        created_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-    
-    if (error) throw error;
-    
-    input.value = '';
-  } catch (error) {
-    console.error('Failed to send message:', error);
-    Nexus.toast('Failed to send message');
-  }
-};
+    sendMessage() {
+        if (!Nexus.state.username) {
+            Nexus.toast('Please log in');
+            return;
+        }
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+        const message = {
+            id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            username: Nexus.state.username,
+            text: text,
+            time: new Date().toISOString()
+        };
+        Nexus.state.chatMessages.push(message);
+        if (Nexus.state.chatMessages.length > 200) Nexus.state.chatMessages = Nexus.state.chatMessages.slice(-200);
+        Storage.setChat(Nexus.state.chatMessages);
+        Nexus.updateOnline();
+        input.value = '';
+        this.renderMessages();
+    },
 
-Nexus.addChatMessage = function(message) {
-  const container = document.getElementById('chatMessages');
-  if (!container) return;
-  
-  const me = message.user_id === Nexus.state.user?.id;
-  const time = new Date(message.created_at).toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-  
-  const msgDiv = document.createElement('div');
-  msgDiv.style.display = 'flex';
-  msgDiv.style.justifyContent = me ? 'flex-end' : 'flex-start';
-  msgDiv.style.margin = '3px 0';
-  msgDiv.innerHTML = `
-    <div style="max-width:82%;">
-      <div class="chat-bubble ${me ? 'chat-sent' : 'chat-received'}">
-        <div style="font-size:10px;font-weight:600;opacity:0.7;">${escapeHtml(message.username)} · ${time}</div>
-        <p style="margin:2px 0 0;">${escapeHtml(message.content)}</p>
-      </div>
-    </div>
-  `;
-  
-  container.appendChild(msgDiv);
-  container.scrollTop = container.scrollHeight;
-};
+    deleteMessage(id) {
+        Nexus.state.chatMessages = Nexus.state.chatMessages.filter(m => m.id !== id);
+        Storage.setChat(Nexus.state.chatMessages);
+        this.renderMessages();
+    },
 
-Nexus.loadMessages = async function() {
-  const container = document.getElementById('chatMessages');
-  if (!container) return;
-  
-  try {
-    const { data, error } = await supabase
-      .from('chat_messages')
-      .select('*')
-      .order('created_at', { ascending: true })
-      .limit(100);
-    
-    if (error) throw error;
-    
-    container.innerHTML = '';
-    if (!data || !data.length) {
-      container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:16px;">💬 No messages yet. Start the conversation!</p>';
-      return;
+    changeUsername() {
+        const newName = prompt('Enter new username:', Nexus.state.username);
+        if (newName && newName.trim()) {
+            Nexus.state.username = newName.trim();
+            Auth.saveAuth();
+            document.getElementById('myUsername').textContent = Nexus.state.username;
+            Nexus.updateOnline();
+            Nexus.toast('Username updated');
+        }
+    },
+
+    render() {
+        document.getElementById('myUsername').textContent = Nexus.state.username || '—';
+        document.getElementById('onlineCount').textContent = Nexus.updateOnline();
+        this.renderMessages();
+        this.startPoll();
+    },
+
+    renderMessages() {
+        const container = document.getElementById('chatMessages');
+        if (!container) return;
+        if (Nexus.state.chatMessages.length === 0) {
+            container.innerHTML = '<p style=\"color:#94a3b8;text-align:center;padding:16px;\">No messages yet.</p>';
+            return;
+        }
+        container.innerHTML = Nexus.state.chatMessages.map(m => {
+            const me = m.username === Nexus.state.username;
+            const time = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return '<div style=\"display:flex;justify-content:' + (me ? 'flex-end' : 'flex-start') + ';margin:3px 0;\"><div style=\"max-width:82%;\"><div class=\"chat-bubble ' + (me ? 'chat-sent' : 'chat-received') + '\"><div style=\"font-size:10px;font-weight:600;opacity:0.7;\">' + m.username + ' · ' + time + '</div><p style=\"margin:2px 0 0;\">' + m.text + '</p></div>' + (me ? '<button class=\"btn-sm btn-danger\" onclick=\"Nexus.deleteMessage(\'' + m.id + '\')\" style=\"font-size:9px;padding:2px 5px;margin-top:1px;\">🗑️</button>' : '') + '</div></div>';
+        }).join('');
+        container.scrollTop = container.scrollHeight;
     }
-    
-    data.forEach(msg => Nexus.addChatMessage(msg));
-  } catch (error) {
-    console.error('Failed to load messages:', error);
-    container.innerHTML = '<p style="color:#ef4444;text-align:center;padding:16px;">❌ Failed to load messages</p>';
-  }
-};
-
-Nexus.renderChat = function() {
-  document.getElementById('myUsername').textContent = Nexus.state.user?.username || '—';
-  Nexus.loadMessages();
-  Nexus.initChat();
-};
-
-Nexus.deleteMessage = function(id) {
-  Nexus.toast('Delete feature coming soon');
-};
+};" > js/chat.js
