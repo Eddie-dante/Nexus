@@ -11,7 +11,43 @@
     <button class="wp-fab" onclick="Nexus.navigate('wallpapers')">🎨</button>
     <div id="toastContainer"></div>
 
-    <!-- Aura Selection -->
+    <!-- ========== PAGE: LANDING ========== -->
+    <div class="page active" id="page-landing">
+        <div class="container landing-content">
+            <span class="landing-icon">⚡</span>
+            <h1 class="landing-title">Nexus</h1>
+            <p class="landing-subtitle">Shape your presence. Manifest your energy.</p>
+            <button class="btn-primary" onclick="Nexus.navigate('login')">Sign In</button>
+            <button class="btn-secondary" onclick="Nexus.navigate('signup')" style="margin-top:8px;">Create Account</button>
+        </div>
+    </div>
+
+    <!-- ========== PAGE: SIGNUP ========== -->
+    <div class="page" id="page-signup">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:16px;">✨ Create Account</h2>
+            <input type="text" id="signupName" placeholder="Full name" style="margin-bottom:8px;">
+            <input type="text" id="signupUser" placeholder="Username" style="margin-bottom:8px;">
+            <input type="password" id="signupPass" placeholder="Password" style="margin-bottom:16px;">
+            <button class="btn-primary" onclick="handleSignup()">Sign Up</button>
+            <div class="auth-toggle" onclick="Nexus.navigate('login')">Already have an account? Log in</div>
+            <button class="btn-secondary" onclick="Nexus.navigate('landing')" style="margin-top:8px;">← Back</button>
+        </div>
+    </div>
+
+    <!-- ========== PAGE: LOGIN ========== -->
+    <div class="page" id="page-login">
+        <div class="container">
+            <h2 style="font-size:19px;font-weight:700;margin-bottom:16px;">🔐 Sign In</h2>
+            <input type="text" id="loginUser" placeholder="Username" style="margin-bottom:8px;">
+            <input type="password" id="loginPass" placeholder="Password" style="margin-bottom:16px;">
+            <button class="btn-primary" onclick="handleLogin()">Log In</button>
+            <div class="auth-toggle" onclick="Nexus.navigate('signup')">No account? Create one</div>
+            <button class="btn-secondary" onclick="Nexus.navigate('landing')" style="margin-top:8px;">← Back</button>
+        </div>
+    </div>
+
+    <!-- ========== PAGE: AURA SELECTION ========== -->
     <div class="page" id="page-select">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:3px;">Choose Your Auras</h2>
@@ -22,7 +58,7 @@
         </div>
     </div>
 
-    <!-- Dashboard -->
+    <!-- ========== PAGE: DASHBOARD ========== -->
     <div class="page" id="page-dashboard">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -59,7 +95,7 @@
         </div>
     </div>
 
-    <!-- Diary -->
+    <!-- ========== PAGE: DIARY ========== -->
     <div class="page" id="page-diary">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📖 Diary</h2>
@@ -75,7 +111,7 @@
         </div>
     </div>
 
-    <!-- Routines -->
+    <!-- ========== PAGE: ROUTINE ========== -->
     <div class="page" id="page-routine">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:10px;">📋 Routines</h2>
@@ -88,7 +124,7 @@
         </div>
     </div>
 
-    <!-- Chat -->
+    <!-- ========== PAGE: CHAT ========== -->
     <div class="page" id="page-chat">
         <div class="container">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
@@ -109,7 +145,7 @@
         </div>
     </div>
 
-    <!-- Social Feed -->
+    <!-- ========== PAGE: SOCIAL FEED ========== -->
     <div class="page" id="page-social">
         <div class="container" style="padding: 16px 14px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -135,7 +171,7 @@
         </div>
     </div>
 
-    <!-- Profile -->
+    <!-- ========== PAGE: PROFILE ========== -->
     <div class="page" id="page-profile">
         <div class="container">
             <div class="profile-header">
@@ -162,7 +198,7 @@
         </div>
     </div>
 
-    <!-- Wallpapers -->
+    <!-- ========== PAGE: WALLPAPERS ========== -->
     <div class="page" id="page-wallpapers">
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Wallpapers</h2>
@@ -172,7 +208,7 @@
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
+    <!-- ========== BOTTOM NAVIGATION ========== -->
     <nav class="bottom-nav" id="bottomNav">
         <button class="nav-btn active" data-page="social"><span class="nav-icon">🏠</span><span class="nav-label">Home</span></button>
         <button class="nav-btn" data-page="dashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
@@ -183,7 +219,7 @@
         <button class="nav-btn" data-page="profile"><span class="nav-icon">👤</span><span class="nav-label">Profile</span></button>
     </nav>
 
-    <!-- Scripts -->
+    <!-- ========== SCRIPTS ========== -->
     <script src="js/storage.js"></script>
     <script src="js/auras.js"></script>
     <script src="js/wallpapers.js"></script>
