@@ -54,7 +54,7 @@
             <p style="color:#64748b;font-size:12px;margin-bottom:10px;">Select up to 3 energies</p>
             <div class="counter-chip"><span>✧</span> <strong id="counter">0</strong><span>/3</span></div>
             <div class="aura-grid" id="auraGrid"></div>
-            <button class="btn-primary" id="btnConfirmAuras" style="margin-top:10px;" onclick="Nexus.confirmSelection()">Continue →</button>
+            <button class="btn-primary" id="btnConfirmAuras" onclick="Nexus.confirmSelection()" style="margin-top:10px;">Continue →</button>
         </div>
     </div>
 
@@ -203,7 +203,7 @@
         <div class="container">
             <h2 style="font-size:19px;font-weight:700;margin-bottom:8px;">🎨 Walls</h2>
             <button class="btn-sm" id="btnRandomWallpaper" onclick="Nexus.randomWallpaper()" style="width:100%;margin-bottom:8px;">🎲 Random</button>
-            <p style="font-size:10px;color:#94a3b8;" id="wpCount">50+ wallpapers</p>
+            <p style="font-size:10px;color:#94a3b8;" id="wpCount">0 wallpapers</p>
             <div class="wp-grid" id="wpGrid"></div>
         </div>
     </div>
@@ -231,5 +231,22 @@
     <script src="js/social.js"></script>
     <script src="js/profile.js"></script>
     <script src="js/app.js"></script>
+
+    <!-- ===== DEBUG: Check if pages exist ===== -->
+    <script>
+        (function() {
+            console.log('🔍 Checking pages...');
+            const pages = ['landing', 'login', 'signup', 'select', 'dashboard', 'diary', 'routine', 'chat', 'social', 'profile', 'wallpapers'];
+            pages.forEach(p => {
+                const el = document.getElementById('page-' + p);
+                if (el) {
+                    console.log('✅ Page found:', p);
+                } else {
+                    console.log('❌ Page MISSING:', p);
+                }
+            });
+            console.log('🔍 Navigation function:', typeof Nexus.navigate);
+        })();
+    </script>
 </body>
 </html>

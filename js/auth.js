@@ -32,20 +32,25 @@ const Auth = {
     },
 
     handleSignup() {
+        console.log('handleSignup called');
         const name = document.getElementById('signupName').value.trim();
         const user = document.getElementById('signupUser').value.trim();
         const pass = document.getElementById('signupPass').value.trim();
+        
         if (!name || !user || !pass) {
             Nexus.toast('Please fill all fields');
             return;
         }
+        
         const users = JSON.parse(localStorage.getItem('nexus_users') || '{}');
         if (users[user]) {
             Nexus.toast('Username already exists');
             return;
         }
+        
         users[user] = { name, password: pass, created: Date.now() };
         localStorage.setItem('nexus_users', JSON.stringify(users));
+        
         Nexus.state.username = user;
         Nexus.state.selectedAuras = [];
         Nexus.state.completedTasks = [];
@@ -56,28 +61,34 @@ const Auth = {
         Nexus.state.likedPosts = [];
         Nexus.state.bio = 'Building my energy. One aura at a time. ⚡';
         this.saveAuth();
+        
         Nexus.toast('Account created! Welcome ' + name);
         Nexus.navigate('select');
     },
 
     handleLogin() {
+        console.log('handleLogin called');
         const user = document.getElementById('loginUser').value.trim();
         const pass = document.getElementById('loginPass').value.trim();
+        
         if (!user || !pass) {
             Nexus.toast('Enter username and password');
             return;
         }
+        
         const users = JSON.parse(localStorage.getItem('nexus_users') || '{}');
         if (!users[user] || users[user].password !== pass) {
             Nexus.toast('Invalid credentials');
             return;
         }
+        
         Nexus.state.username = user;
         const userData = JSON.parse(localStorage.getItem('nexus_data_' + user) || '{}');
         Object.assign(Nexus.state, userData);
         Nexus.state.chatMessages = Storage.getChat();
         this.saveAuth();
         Nexus.setBg(Nexus.state.wallpaper);
+        
         Nexus.toast('Welcome back, ' + users[user].name);
         Nexus.navigate('social');
     },
