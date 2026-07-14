@@ -1,5 +1,4 @@
-# Create profile.js
-echo "// js/profile.js - Profile Logic
+// js/profile.js - Profile Logic
 const Profile = {
     editProfile() {
         const newBio = prompt('Edit your bio:', Nexus.state.bio || '');
@@ -24,11 +23,11 @@ const Profile = {
         const grid = document.getElementById('profilePostsGrid');
         const userPosts = Nexus.state.posts.filter(p => p.author === Nexus.state.username);
         if (userPosts.length === 0) {
-            grid.innerHTML = '<p style=\"color:#94a3b8;text-align:center;grid-column:1/-1;padding:16px 0;\">No posts yet.</p>';
+            grid.innerHTML = '<p style="color:#94a3b8;text-align:center;grid-column:1/-1;padding:16px 0;">No posts yet.</p>';
             return;
         }
         grid.innerHTML = userPosts.map(p =>
-            '<div style=\"aspect-ratio:1;background-image:url(\'' + (p.image || UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)]) + '\');background-size:cover;background-position:center;border-radius:4px;cursor:pointer;\" onclick=\"Nexus.toast(\'' + p.text.substring(0, 30) + '...\')\"></div>'
+            `<div style="aspect-ratio:1;background-image:url('${p.image || UNSPLASH[Math.floor(Math.random() * UNSPLASH.length)]}');background-size:cover;background-position:center;border-radius:4px;cursor:pointer;" onclick="Nexus.toast('${p.text.substring(0, 30)}...')"></div>`
         ).join('');
     }
-};" > js/profile.js
+};

@@ -1,5 +1,4 @@
-# Create diary.js
-echo "// js/diary.js - Diary Logic
+// js/diary.js - Diary Logic
 const Diary = {
     saveDiary() {
         const content = document.getElementById('diaryInput').value.trim();
@@ -29,12 +28,12 @@ const Diary = {
         let entries = Nexus.state.diary;
         if (search) entries = entries.filter(x => x.content.toLowerCase().includes(search));
         if (entries.length === 0) {
-            container.innerHTML = '<p style=\"color:#94a3b8;text-align:center;\">' + (search ? 'No matches.' : 'No entries yet.') + '</p>';
+            container.innerHTML = '<p style="color:#94a3b8;text-align:center;">' + (search ? 'No matches.' : 'No entries yet.') + '</p>';
             return;
         }
         container.innerHTML = entries.map((x, i) => {
             const idx = Nexus.state.diary.indexOf(x);
-            return '<div class=\"entry-card\"><div style=\"display:flex;justify-content:space-between;margin-bottom:3px;\"><small style=\"color:#94a3b8;\">' + new Date(x.date).toLocaleDateString() + '</small><span style=\"font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;\">' + x.mood + '</span></div><p style=\"font-size:12px;white-space:pre-wrap;\">' + x.content + '</p><button class=\"btn-sm btn-danger\" onclick=\"Nexus.deleteDiary(' + idx + ')\" style=\"margin-top:5px;\">🗑️</button></div>';
+            return `<div class="entry-card"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><small style="color:#94a3b8;">${new Date(x.date).toLocaleDateString()}</small><span style="font-size:10px;background:rgba(0,0,0,0.04);padding:2px 7px;border-radius:9px;">${x.mood}</span></div><p style="font-size:12px;white-space:pre-wrap;">${x.content}</p><button class="btn-sm btn-danger" onclick="Nexus.deleteDiary(${idx})" style="margin-top:5px;">🗑️</button></div>`;
         }).join('');
     }
-};" > js/diary.js
+};

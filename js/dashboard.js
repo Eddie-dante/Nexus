@@ -1,5 +1,4 @@
-# Create dashboard.js
-echo "// js/dashboard.js - Dashboard Logic
+// js/dashboard.js - Dashboard Logic
 const Dashboard = {
     getTasks() {
         let tasks = [];
@@ -77,7 +76,7 @@ const Dashboard = {
 
         document.getElementById('tasks').innerHTML = tasks.map((t, i) => {
             const c = Nexus.state.completedTasks.includes(i);
-            return '<div class=\"task-item' + (c ? ' done' : '') + '\" onclick=\"Nexus.toggleTask(' + i + ')\"><div class=\"check-box\">' + (c ? '✓' : '') + '</div><span class=\"task-text\">' + t + '</span></div>';
+            return `<div class="task-item${c ? ' done' : ''}" onclick="Nexus.toggleTask(${i})"><div class="check-box">${c ? '✓' : ''}</div><span class="task-text">${t}</span></div>`;
         }).join('');
         this.renderCalendar();
     },
@@ -116,4 +115,4 @@ const Dashboard = {
             cal.appendChild(div);
         }
     }
-};" > js/dashboard.js
+};

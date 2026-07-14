@@ -1,5 +1,4 @@
-# Create auth.js
-echo "// js/auth.js - Auth Logic
+// js/auth.js - Auth Logic
 const Auth = {
     loadAuth() {
         try {
@@ -90,4 +89,4 @@ const Auth = {
         Nexus.toast('Logged out');
         Nexus.navigate('landing');
     }
-};" > js/auth.js
+};

@@ -1,4 +1,4 @@
-// js/auras.js - Complete
+// js/auras.js - Aura Data
 const AURAS = {
     focus: { name: 'Focus', emoji: '🎯', accent: '#ff6b6b', desc: 'Concentration', tasks: ['Deep work 25 min', 'No phone 1 hour', 'Single-task', 'Clear desk', 'Pomodoro'] },
     creativity: { name: 'Creativity', emoji: '🎨', accent: '#f06595', desc: 'Imagination', tasks: ['Free-write 10 min', 'Sketch/doodle', 'Brainstorm', 'New music', 'Rearrange'] },
@@ -17,5 +17,35 @@ const AURAS = {
     adventure: { name: 'Adventure', emoji: '🏔️', accent: '#3b82f6', desc: 'Explore', tasks: ['New place', 'New food', 'Say yes', 'Break routine', 'Plan'] }
 };
 
-window.AURAS = AURAS;
-console.log('✅ Auras loaded');
+const Auras = {
+    toggleAura(key) {
+        const idx = Nexus.state.selectedAuras.indexOf(key);
+        if (idx > -1) Nexus.state.selectedAuras.splice(idx, 1);
+        else if (Nexus.state.selectedAuras.length < 3) Nexus.state.selectedAuras.push(key);
+        Auth.saveAuth();
+        this.render();
+    },
+
+    confirmSelection() {
+        if (Nexus.state.selectedAuras.length === 0) {
+            Nexus.toast('Select at least one aura');
+            return;
+        }
+        Auth.saveAuth();
+        Nexus.navigate('social');
+    },
+
+    render() {
+        const grid = document.getElementById('auraGrid');
+        if (!grid) return;
+        grid.innerHTML = Object.entries(AURAS).map(([key, aura]) => {
+            const sel = Nexus.state.selectedAuras.includes(key);
+            return `<div class="aura-btn${sel ? ' selected' : ''}" onclick="Nexus.toggleAura('${key}')">
+                <span class="emoji">${aura.emoji}</span>
+                <div class="info"><h3>${aura.name}</h3><p>${aura.desc}</p></div>
+                <span class="check-mark">✓</span>
+            </div>`;
+        }).join('');
+        document.getElementById('counter').textContent = Nexus.state.selectedAuras.length;
+    }
+};

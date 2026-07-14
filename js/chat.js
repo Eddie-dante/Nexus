@@ -1,5 +1,4 @@
-# Create chat.js
-echo "// js/chat.js - Chat Logic
+// js/chat.js - Chat Logic
 const Chat = {
     startPoll() {
         this.stopPoll();
@@ -70,14 +69,14 @@ const Chat = {
         const container = document.getElementById('chatMessages');
         if (!container) return;
         if (Nexus.state.chatMessages.length === 0) {
-            container.innerHTML = '<p style=\"color:#94a3b8;text-align:center;padding:16px;\">No messages yet.</p>';
+            container.innerHTML = '<p style="color:#94a3b8;text-align:center;padding:16px;">No messages yet.</p>';
             return;
         }
         container.innerHTML = Nexus.state.chatMessages.map(m => {
             const me = m.username === Nexus.state.username;
             const time = new Date(m.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            return '<div style=\"display:flex;justify-content:' + (me ? 'flex-end' : 'flex-start') + ';margin:3px 0;\"><div style=\"max-width:82%;\"><div class=\"chat-bubble ' + (me ? 'chat-sent' : 'chat-received') + '\"><div style=\"font-size:10px;font-weight:600;opacity:0.7;\">' + m.username + ' · ' + time + '</div><p style=\"margin:2px 0 0;\">' + m.text + '</p></div>' + (me ? '<button class=\"btn-sm btn-danger\" onclick=\"Nexus.deleteMessage(\'' + m.id + '\')\" style=\"font-size:9px;padding:2px 5px;margin-top:1px;\">🗑️</button>' : '') + '</div></div>';
+            return `<div style="display:flex;justify-content:${me ? 'flex-end' : 'flex-start'};margin:3px 0;"><div style="max-width:82%;"><div class="chat-bubble ${me ? 'chat-sent' : 'chat-received'}"><div style="font-size:10px;font-weight:600;opacity:0.7;">${m.username} · ${time}</div><p style="margin:2px 0 0;">${m.text}</p></div>${me ? `<button class="btn-sm btn-danger" onclick="Nexus.deleteMessage('${m.id}')" style="font-size:9px;padding:2px 5px;margin-top:1px;">🗑️</button>` : ''}</div></div>`;
         }).join('');
         container.scrollTop = container.scrollHeight;
     }
-};" > js/chat.js
+};
